@@ -19,7 +19,6 @@ import {
   Home,
   ChevronDown,
   ChevronRight,
-  Quote,
 } from "lucide-react"
 
 const navigation = [
@@ -43,18 +42,12 @@ const navigation = [
     children: [
       { name: "Blog Posts", href: "/admin/blogs" },
       { name: "Resources", href: "/admin/resources" },
-      { name: "Gallery", href: "/admin/gallery" },
     ],
   },
   {
     name: "Events",
     href: "/admin/events",
     icon: Calendar,
-  },
-  {
-    name: "Testimonials",
-    href: "/admin/testimonials",
-    icon: Quote,
   },
   {
     name: "Team",
@@ -192,9 +185,7 @@ export default function AdminLayout({
             </Button>
             <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-600">Welcome, Admin</span>
-              <Button variant="outline" size="sm">
-                View Site
-              </Button>
+              
             </div>
           </div>
         </div>

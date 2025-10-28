@@ -103,22 +103,25 @@ export default function BlogPage() {
       <Navigation />
 
       {/* Hero Section */}
-      <section className="relative text-white py-16">
-        <div
-          className="absolute inset-0 bg-cover bg-center z-0"
-          style={{
-            backgroundImage: "url('https://images.unsplash.com/photo-1517048676732-d65bc937f952?q=80&w=2070')",
-          }}
-        ></div>
-        <div className="absolute inset-0 bg-[var(--amwik-purple)] opacity-80 z-10"></div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-20">
-          <h1 className="text-5xl font-bold mb-4">Blog</h1>
-          <p className="text-xl max-w-3xl mx-auto">
-            Insights, stories, and perspectives from women in media. Stay updated with the latest trends, challenges,
-            and opportunities in journalism and media.
-          </p>
-        </div>
-      </section>
+<section className="relative py-16">
+  <div
+    className="absolute inset-0 bg-cover bg-center z-0"
+    style={{
+      backgroundImage:
+        "url('https://images.unsplash.com/photo-1517048676732-d65bc937f952?q=80&w=2070')",
+    }}
+  ></div>
+  <div className="absolute inset-0 bg-[var(--amwik-purple)] opacity-80 z-10"></div>
+  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-20 text-white">
+    <h1 className="text-5xl font-bold mb-4 text-white">Blog</h1>
+    <p className="text-xl max-w-3xl mx-auto text-white">
+      Insights, stories, and perspectives from women in media. Stay updated
+      with the latest trends, challenges, and opportunities in journalism and
+      media.
+    </p>
+  </div>
+</section>
+
 
       {/* Search + Filters */}
       <section className="py-8 bg-gray-50 border-b">

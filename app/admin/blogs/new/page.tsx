@@ -525,11 +525,11 @@ export default function NewBlogPage() {
                       <SelectValue placeholder="Select author" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="sarah-wanjiku">Sarah Wanjiku</SelectItem>
-                      <SelectItem value="grace-mutindi">Grace Mutindi</SelectItem>
-                      <SelectItem value="mary-kiprotich">Mary Kiprotich</SelectItem>
-                      <SelectItem value="agnes-wanjiru">Agnes Wanjiru</SelectItem>
-                      <SelectItem value="catherine-njeri">Catherine Njeri</SelectItem>
+                      <SelectItem value="AMWIK">AMWIK</SelectItem>
+                      <SelectItem value="AMWIK Team">AMWIK Team</SelectItem>
+                      <SelectItem value="AMWIK AUTHOR1">AMWIK AUTHOR1</SelectItem>
+                      <SelectItem value="AMWIK AUTHOR2">AMWIK AUTHOR2</SelectItem>
+                      <SelectItem value="AMWIK AUTHOR3">AMWIK AUTHOR3</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

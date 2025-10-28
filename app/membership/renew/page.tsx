@@ -1,8 +1,8 @@
 "use client"
 
-import type React from "react"
-
 import { useState } from "react"
+import Navigation from "@/components/navigation"
+import Footer from "@/components/footer"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,6 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import HeroSection from "@/components/hero-section"
 import { Check, CreditCard, Smartphone, Building, RefreshCw } from "lucide-react"
+import useRenewals from "@/hooks/useRenewals"
 
 const membershipTypes = [
   {
@@ -40,7 +41,6 @@ const membershipTypes = [
       "Newsletter subscription",
     ],
   },
-  
 ]
 
 export default function RenewMembershipPage() {
@@ -95,6 +95,8 @@ export default function RenewMembershipPage() {
     communicationConsent: false,
   })
 
+  const { refetch } = useRenewals()
+
   const handleInputChange = (field: string, value: any) => {
     setFormData((prev) => ({
       ...prev,
@@ -105,20 +107,47 @@ export default function RenewMembershipPage() {
   const handleInterestChange = (interest: string, checked: boolean) => {
     setFormData((prev) => ({
       ...prev,
-      interests: checked ? [...prev.interests, interest] : prev.interests.filter((i) => i !== interest),
+      interests: checked
+        ? [...prev.interests, interest]
+        : prev.interests.filter((i) => i !== interest),
     }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log("Membership renewal submitted:", formData)
-    // Handle form submission
+    try {
+      const res = await fetch("/api/renewals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      })
+      if (!res.ok) throw new Error("Failed to save renewal")
+
+      await refetch() // refresh admin dashboards
+      alert("Membership renewal submitted successfully!")
+
+      // reset minimal fields (keep optional ones blank)
+      setFormData({
+        ...formData,
+        membershipNumber: "",
+        currentMembershipType: "",
+        firstName: "",
+        lastName: "",
+        email: "",
+        phone: "",
+      })
+    } catch (err) {
+      console.error(err)
+      alert("Error submitting renewal")
+    }
   }
 
   const selectedMembership = membershipTypes.find((m) => m.type === formData.membershipType)
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <Navigation />
+      
       {/* Hero Section */}
       <HeroSection
         title="Renew Your Membership"
@@ -236,9 +265,7 @@ export default function RenewMembershipPage() {
                     value={formData.nationality}
                     onValueChange={(value) => handleInputChange("nationality", value)}
                   >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Kenyan">Kenyan</SelectItem>
                       <SelectItem value="Other">Other</SelectItem>
@@ -282,9 +309,7 @@ export default function RenewMembershipPage() {
                 <div>
                   <Label htmlFor="county">County</Label>
                   <Select value={formData.county} onValueChange={(value) => handleInputChange("county", value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select county" />
-                    </SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder="Select county" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Nairobi">Nairobi</SelectItem>
                       <SelectItem value="Mombasa">Mombasa</SelectItem>
@@ -370,9 +395,7 @@ export default function RenewMembershipPage() {
                     value={formData.yearsOfExperience}
                     onValueChange={(value) => handleInputChange("yearsOfExperience", value)}
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select experience range" />
-                    </SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder="Select experience range" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="0-2">0-2 years</SelectItem>
                       <SelectItem value="3-5">3-5 years</SelectItem>
@@ -388,9 +411,7 @@ export default function RenewMembershipPage() {
                     value={formData.mediaExperience}
                     onValueChange={(value) => handleInputChange("mediaExperience", value)}
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select media experience" />
-                    </SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder="Select media experience" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="0-2">0-2 years</SelectItem>
                       <SelectItem value="3-5">3-5 years</SelectItem>
@@ -419,10 +440,7 @@ export default function RenewMembershipPage() {
                   className="mt-3"
                 >
                   {membershipTypes.map((membership) => (
-                    <div
-                      key={membership.type}
-                      className="flex items-start space-x-3 p-4 border rounded-lg hover:bg-gray-50"
-                    >
+                    <div key={membership.type} className="flex items-start space-x-3 p-4 border rounded-lg hover:bg-gray-50">
                       <RadioGroupItem value={membership.type} id={membership.type} className="mt-1" />
                       <div className="flex-1">
                         <Label htmlFor={membership.type} className="font-medium cursor-pointer">
@@ -444,13 +462,8 @@ export default function RenewMembershipPage() {
 
               <div>
                 <Label htmlFor="renewalPeriod">Renewal Period</Label>
-                <Select
-                  value={formData.renewalPeriod}
-                  onValueChange={(value) => handleInputChange("renewalPeriod", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
+                <Select value={formData.renewalPeriod} onValueChange={(value) => handleInputChange("renewalPeriod", value)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="1-year">1 Year</SelectItem>
                     <SelectItem value="2-year">2 Years (5% discount)</SelectItem>
@@ -461,7 +474,7 @@ export default function RenewMembershipPage() {
             </CardContent>
           </Card>
 
-          {/* Updated Interests */}
+          {/* Interests */}
           <Card>
             <CardHeader>
               <CardTitle>Areas of Interest</CardTitle>
@@ -472,18 +485,9 @@ export default function RenewMembershipPage() {
                 <Label className="text-base font-medium">Professional Interests (Select all that apply)</Label>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-3">
                   {[
-                    "Investigative Journalism",
-                    "Digital Media",
-                    "Broadcast Journalism",
-                    "Print Media",
-                    "Media Ethics",
-                    "Community Media",
-                    "Media Law",
-                    "Public Relations",
-                    "Media Entrepreneurship",
-                    "Documentary Production",
-                    "Social Media",
-                    "Media Training",
+                    "Investigative Journalism","Digital Media","Broadcast Journalism","Print Media","Media Ethics",
+                    "Community Media","Media Law","Public Relations","Media Entrepreneurship","Documentary Production",
+                    "Social Media","Media Training",
                   ].map((interest) => (
                     <div key={interest} className="flex items-center space-x-2">
                       <Checkbox
@@ -491,9 +495,7 @@ export default function RenewMembershipPage() {
                         checked={formData.interests.includes(interest)}
                         onCheckedChange={(checked) => handleInterestChange(interest, checked as boolean)}
                       />
-                      <Label htmlFor={interest} className="text-sm cursor-pointer">
-                        {interest}
-                      </Label>
+                      <Label htmlFor={interest} className="text-sm cursor-pointer">{interest}</Label>
                     </div>
                   ))}
                 </div>
@@ -506,7 +508,7 @@ export default function RenewMembershipPage() {
                     checked={formData.volunteerInterest}
                     onCheckedChange={(checked) => handleInputChange("volunteerInterest", checked)}
                   />
-                  <Label htmlFor="volunteerInterest">I'm interested in volunteering for AMWIK activities</Label>
+                  <Label htmlFor="volunteerInterest" className="cursor-pointer">I am interested in volunteering for AMWIK activities</Label>
                 </div>
 
                 <div className="flex items-center space-x-2">
@@ -515,9 +517,7 @@ export default function RenewMembershipPage() {
                     checked={formData.mentorshipInterest}
                     onCheckedChange={(checked) => handleInputChange("mentorshipInterest", checked)}
                   />
-                  <Label htmlFor="mentorshipInterest">
-                    I'm interested in mentorship opportunities (as mentor or mentee)
-                  </Label>
+                  <Label htmlFor="mentorshipInterest" className="cursor-pointer">I would like to participate in the mentorship program</Label>
                 </div>
               </div>
             </CardContent>
@@ -526,49 +526,34 @@ export default function RenewMembershipPage() {
           {/* Payment Information */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <CreditCard className="h-5 w-5 mr-2 text-[var(--amwik-green)]" />
-                Payment Information
-              </CardTitle>
-              <CardDescription>
-                {selectedMembership && (
-                  <span className="font-medium text-[var(--amwik-purple)]">
-                    Total Amount: {selectedMembership.price}
-                  </span>
-                )}
-              </CardDescription>
+              <CardTitle>Payment Information</CardTitle>
+              <CardDescription>Select your preferred payment method</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label className="text-base font-medium">Payment Method *</Label>
-                <RadioGroup
-                  value={formData.paymentMethod}
-                  onValueChange={(value) => handleInputChange("paymentMethod", value)}
-                  className="mt-3"
-                >
-                  <div className="flex items-center space-x-3 p-3 border rounded-lg">
-                    <RadioGroupItem value="mpesa" id="mpesa" />
-                    <Smartphone className="h-5 w-5 text-green-600" />
-                    <Label htmlFor="mpesa" className="cursor-pointer">
-                      M-Pesa Mobile Payment
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-3 p-3 border rounded-lg">
-                    <RadioGroupItem value="bank" id="bank" />
-                    <Building className="h-5 w-5 text-blue-600" />
-                    <Label htmlFor="bank" className="cursor-pointer">
-                      Bank Transfer
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-3 p-3 border rounded-lg">
-                    <RadioGroupItem value="card" id="card" />
-                    <CreditCard className="h-5 w-5 text-purple-600" />
-                    <Label htmlFor="card" className="cursor-pointer">
-                      Credit/Debit Card
-                    </Label>
-                  </div>
-                </RadioGroup>
-              </div>
+            <CardContent>
+              <RadioGroup
+                value={formData.paymentMethod}
+                onValueChange={(value) => handleInputChange("paymentMethod", value)}
+                className="grid grid-cols-1 md:grid-cols-3 gap-4"
+              >
+                <div className="flex items-center space-x-2 border rounded-lg p-4">
+                  <RadioGroupItem value="M-Pesa" id="mpesa" />
+                  <Label htmlFor="mpesa" className="flex items-center cursor-pointer">
+                    <Smartphone className="h-4 w-4 mr-2" /> M-Pesa
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2 border rounded-lg p-4">
+                  <RadioGroupItem value="Bank Transfer" id="bank" />
+                  <Label htmlFor="bank" className="flex items-center cursor-pointer">
+                    <Building className="h-4 w-4 mr-2" /> Bank Transfer
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2 border rounded-lg p-4">
+                  <RadioGroupItem value="Credit Card" id="card" />
+                  <Label htmlFor="card" className="flex items-center cursor-pointer">
+                    <CreditCard className="h-4 w-4 mr-2" /> Credit Card
+                  </Label>
+                </div>
+              </RadioGroup>
             </CardContent>
           </Card>
 
@@ -579,104 +564,73 @@ export default function RenewMembershipPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="specialRequests">Special Requests or Comments</Label>
+                <Label htmlFor="specialRequests">Special Requests or Accommodations</Label>
                 <Textarea
                   id="specialRequests"
                   value={formData.specialRequests}
                   onChange={(e) => handleInputChange("specialRequests", e.target.value)}
-                  placeholder="Any special accommodations, requests, or additional information..."
-                  rows={3}
+                  placeholder="Enter any special requests or accommodations needed"
                 />
               </div>
-
               <div>
-                <Label htmlFor="referralSource">How did you hear about AMWIK renewal?</Label>
-                <Select
+                <Label htmlFor="referralSource">How did you hear about AMWIK?</Label>
+                <Input
+                  id="referralSource"
                   value={formData.referralSource}
-                  onValueChange={(value) => handleInputChange("referralSource", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select source" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="email">Email reminder</SelectItem>
-                    <SelectItem value="website">AMWIK website</SelectItem>
-                    <SelectItem value="social-media">Social media</SelectItem>
-                    <SelectItem value="colleague">Colleague/Friend</SelectItem>
-                    <SelectItem value="event">AMWIK event</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
+                  onChange={(e) => handleInputChange("referralSource", e.target.value)}
+                  placeholder="Referral source"
+                />
               </div>
             </CardContent>
           </Card>
 
-          {/* Terms and Conditions */}
+          {/* Agreements */}
           <Card>
             <CardHeader>
-              <CardTitle>Terms and Conditions</CardTitle>
+              <CardTitle>Agreements</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-start space-x-2">
+            <CardContent className="space-y-3">
+              <div className="flex items-center space-x-2">
                 <Checkbox
                   id="termsAccepted"
                   checked={formData.termsAccepted}
                   onCheckedChange={(checked) => handleInputChange("termsAccepted", checked)}
                   required
                 />
-                <Label htmlFor="termsAccepted" className="text-sm leading-relaxed">
-                  I agree to the{" "}
-                  <a href="/terms" className="text-[var(--amwik-purple)] hover:underline">
-                    Terms and Conditions
-                  </a>{" "}
-                  and confirm that the information provided is accurate and complete.
-                </Label>
+                <Label htmlFor="termsAccepted">I agree to abide by AMWIK&apos;s terms and conditions *</Label>
               </div>
 
-              <div className="flex items-start space-x-2">
+              <div className="flex items-center space-x-2">
                 <Checkbox
                   id="privacyAccepted"
                   checked={formData.privacyAccepted}
                   onCheckedChange={(checked) => handleInputChange("privacyAccepted", checked)}
                   required
                 />
-                <Label htmlFor="privacyAccepted" className="text-sm leading-relaxed">
-                  I acknowledge that I have read and understood the{" "}
-                  <a href="/privacy" className="text-[var(--amwik-purple)] hover:underline">
-                    Privacy Policy
-                  </a>
-                  .
-                </Label>
+                <Label htmlFor="privacyAccepted">I agree to AMWIK&apos;s privacy policy *</Label>
               </div>
 
-              <div className="flex items-start space-x-2">
+              <div className="flex items-center space-x-2">
                 <Checkbox
                   id="communicationConsent"
                   checked={formData.communicationConsent}
                   onCheckedChange={(checked) => handleInputChange("communicationConsent", checked)}
                 />
-                <Label htmlFor="communicationConsent" className="text-sm leading-relaxed">
-                  I consent to receiving communications from AMWIK about membership benefits, events, and organizational
-                  updates.
-                </Label>
+                <Label htmlFor="communicationConsent">I consent to receive communications from AMWIK</Label>
               </div>
             </CardContent>
           </Card>
 
-          {/* Submit Button */}
-          <div className="flex justify-center">
-            <Button
-              type="submit"
-              size="lg"
-              className="bg-[var(--amwik-purple)] hover:bg-purple-700 px-12 py-3"
-              disabled={!formData.termsAccepted || !formData.privacyAccepted}
-            >
-              <RefreshCw className="h-5 w-5 mr-2" />
-              Renew Membership
+          {/* Submit */}
+          <div className="flex justify-end">
+            <Button type="submit" className="bg-[var(--amwik-purple)] hover:bg-purple-700">
+              Submit Renewal
             </Button>
           </div>
         </form>
       </div>
+
+      <Footer />
     </div>
   )
 }

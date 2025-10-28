@@ -23,8 +23,13 @@ export default function Navigation() {
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
             <Link href="/" className="flex items-center space-x-2">
-              <Image src="/images/amwik-logo.png" alt="AMWIK Logo" width={40} height={40} className="h-10 w-auto" />
-              
+              <Image
+                src="/images/amwik-logo.png"
+                alt="AMWIK Logo"
+                width={40}
+                height={40}
+                className="h-10 w-auto"
+              />
             </Link>
           </div>
 
@@ -40,23 +45,33 @@ export default function Navigation() {
                   </Link>
                 </NavigationMenuItem>
 
-             <NavigationMenuItem>
-  <NavigationMenuTrigger>About</NavigationMenuTrigger>
-  <NavigationMenuContent className="bg-white shadow-lg rounded-md">
-    <div className="grid gap-3 p-4 w-[400px]">
-      <Link href="/about/programs" className="block p-2 hover:bg-purple-100 rounded">
-        Our Programs
-      </Link>
-      <Link href="/about/partners" className="block p-2 hover:bg-purple-100 rounded">
-        Our Partners
-      </Link>
-      <Link href="/about/team" className="block p-2 hover:bg-gray-100 rounded">
-        Our Team
-      </Link>
-    </div>
-  </NavigationMenuContent>
-</NavigationMenuItem>
- 
+                {/* About Dropdown */}
+                <NavigationMenuItem>
+                  <NavigationMenuTrigger>About</NavigationMenuTrigger>
+                  <NavigationMenuContent className="bg-white shadow-lg rounded-md">
+                    <div className="grid gap-3 p-4 w-[400px]">
+                      <Link
+                        href="/about/programs"
+                        className="block p-2 hover:bg-purple-100 rounded"
+                      >
+                        Our Programs
+                      </Link>
+                      <Link
+                        href="/about/partners"
+                        className="block p-2 hover:bg-purple-100 rounded"
+                      >
+                        Our Partners
+                      </Link>
+                      <Link
+                        href="/about/team"
+                        className="block p-2 hover:bg-purple-100 rounded"
+                      >
+                        Our Team
+                      </Link>
+                    </div>
+                  </NavigationMenuContent>
+                </NavigationMenuItem>
+
                 <NavigationMenuItem>
                   <Link href="/events" legacyBehavior passHref>
                     <NavigationMenuLink className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-[var(--amwik-purple)]">
@@ -65,17 +80,27 @@ export default function Navigation() {
                   </Link>
                 </NavigationMenuItem>
 
+                {/* Membership Dropdown */}
                 <NavigationMenuItem>
                   <NavigationMenuTrigger>Membership</NavigationMenuTrigger>
                   <NavigationMenuContent>
                     <div className="grid gap-3 p-4 w-[300px]">
-                      <Link href="/membership/new" className="block p-2 hover:bg-purple-100 rounded">
+                      <Link
+                        href="/membership/new"
+                        className="block p-2 hover:bg-purple-100 rounded"
+                      >
                         New Membership
                       </Link>
-                      <Link href="/membership/renew" className="block p-2 hover:bg-purple-100 rounded">
+                      <Link
+                        href="/membership/renew"
+                        className="block p-2 hover:bg-purple-100 rounded"
+                      >
                         Renew Membership
                       </Link>
-                      <Link href="/membership/career-center" className="block p-2 hover:bg-purple-100 rounded">
+                      <Link
+                        href="/membership/career-center"
+                        className="block p-2 hover:bg-purple-100 rounded"
+                      >
                         Career Center
                       </Link>
                     </div>
@@ -98,12 +123,25 @@ export default function Navigation() {
                   </Link>
                 </NavigationMenuItem>
 
+                {/* Resources Dropdown */}
                 <NavigationMenuItem>
-                  <Link href="/resources" legacyBehavior passHref>
-                    <NavigationMenuLink className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-[var(--amwik-purple)]">
-                      Resources
-                    </NavigationMenuLink>
-                  </Link>
+                  <NavigationMenuTrigger>Resources</NavigationMenuTrigger>
+                  <NavigationMenuContent>
+                    <div className="grid gap-3 p-4 w-[300px]">
+                      <Link
+                        href="/resources"
+                        className="block p-2 hover:bg-purple-100 rounded"
+                      >
+                        All Resources
+                      </Link>
+                      <Link
+                        href="/resources/guidance"
+                        className="block p-2 hover:bg-purple-100 rounded"
+                      >
+                        Guidance for Female Journalists
+                      </Link>
+                    </div>
+                  </NavigationMenuContent>
                 </NavigationMenuItem>
 
                 <NavigationMenuItem>
@@ -126,7 +164,11 @@ export default function Navigation() {
 
           {/* Mobile menu button */}
           <div className="md:hidden">
-            <Button variant="ghost" size="sm" onClick={() => setIsOpen(!isOpen)}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsOpen(!isOpen)}
+            >
               {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </Button>
           </div>
@@ -190,12 +232,21 @@ export default function Navigation() {
               >
                 Gallery
               </Link>
+
+              {/* Resources Mobile Links */}
               <Link
                 href="/resources"
                 className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-[var(--amwik-purple)]"
               >
-                Resources
+                All Resources
               </Link>
+              <Link
+                href="/resources/guidance"
+                className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-[var(--amwik-purple)]"
+              >
+                Guidance for Female Journalists
+              </Link>
+
               <Link
                 href="/contact"
                 className="block px-3 py-2 text-base font-medium text-gray-700 hover:text-[var(--amwik-purple)]"

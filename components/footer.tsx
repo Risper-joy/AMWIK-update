@@ -45,7 +45,7 @@ export default function Footer() {
   }
 
   return (
-    <footer className="bg-[var(--amwik-purple)] text-white">
+    <footer className="bg-[#400C5F] text-white font-sans">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Logo and Description */}
@@ -54,49 +54,49 @@ export default function Footer() {
               <Image src="/images/amwik-logo.png" alt="AMWIK Logo" width={40} height={40} className="h-10 w-auto" />
               <span className="text-xl font-bold">AMWIK</span>
             </div>
-            <p className="text-gray-300 mb-4">
+            <p className="text-white mb-4">
               Association of Media Women in Kenya - Empowering women journalists and media professionals to excel in
               their careers while advocating for gender equality in media.
             </p>
-            <div className="flex space-x-4">
-              <Facebook className="h-6 w-6 hover:text-blue-400 cursor-pointer transition-colors" />
-              <Twitter className="h-6 w-6 hover:text-blue-400 cursor-pointer transition-colors" />
-              <Instagram className="h-6 w-6 hover:text-pink-400 cursor-pointer transition-colors" />
-              <Linkedin className="h-6 w-6 hover:text-blue-400 cursor-pointer transition-colors" />
+            <div className="flex space-x-4 text-[#E6326E]">
+              <Facebook className="h-6 w-6 hover:opacity-80 cursor-pointer transition-colors" />
+              <Twitter className="h-6 w-6 hover:opacity-80 cursor-pointer transition-colors" />
+              <Instagram className="h-6 w-6 hover:opacity-80 cursor-pointer transition-colors" />
+              <Linkedin className="h-6 w-6 hover:opacity-80 cursor-pointer transition-colors" />
             </div>
           </div>
 
           {/* Quick Links */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
+            <h3 className="text-lg font-semibold mb-4 text-white">Quick Links</h3>
             <ul className="space-y-2">
               <li>
-                <Link href="/about/programs" className="text-gray-300 hover:text-white transition-colors">
+                <Link href="/about/programs" className="text-white hover:text-gray-200 transition-colors">
                   Our Programs
                 </Link>
               </li>
               <li>
-                <Link href="/events" className="text-gray-300 hover:text-white transition-colors">
+                <Link href="/events" className="text-white hover:text-gray-200 transition-colors">
                   Events
                 </Link>
               </li>
               <li>
-                <Link href="/membership/new" className="text-gray-300 hover:text-white transition-colors">
+                <Link href="/membership/new" className="text-white hover:text-gray-200 transition-colors">
                   Join Us
                 </Link>
               </li>
               <li>
-                <Link href="/blog" className="text-gray-300 hover:text-white transition-colors">
+                <Link href="/blog" className="text-white hover:text-gray-200 transition-colors">
                   Blog
                 </Link>
               </li>
               <li>
-                <Link href="/resources" className="text-gray-300 hover:text-white transition-colors">
+                <Link href="/resources" className="text-white hover:text-gray-200 transition-colors">
                   Resources
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="text-gray-300 hover:text-white transition-colors">
+                <Link href="/contact" className="text-white hover:text-gray-200 transition-colors">
                   Contact
                 </Link>
               </li>
@@ -105,28 +105,28 @@ export default function Footer() {
 
           {/* Contact Info */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">Contact Us</h3>
+            <h3 className="text-lg font-semibold mb-4 text-white">Contact Us</h3>
             <div className="space-y-3">
               <div className="flex items-start space-x-2">
-                <MapPin className="h-5 w-5 mt-1 text-[var(--amwik-orange)]" />
-                <span className="text-gray-300 text-sm">
+                <MapPin className="h-5 w-5 mt-1 text-[#78B43C]" />
+                <span className="text-white text-sm">
                   Mbaruk Rd, Off Muchai Drive Opp. Awash Ethiopian Restaurant
                 </span>
               </div>
               <div className="flex items-center space-x-2">
-                <Phone className="h-5 w-5 text-[var(--amwik-orange)]" />
-                <span className="text-gray-300 text-sm">0722-201958 | 0737-201958</span>
+                <Phone className="h-5 w-5 text-[#78B43C]" />
+                <span className="text-white text-sm">0722-201958 | 0737-201958</span>
               </div>
               <div className="flex items-center space-x-2">
-                <Mail className="h-5 w-5 text-[var(--amwik-orange)]" />
-                <span className="text-gray-300 text-sm">info@amwik.org</span>
+                <Mail className="h-5 w-5 text-[#78B43C]" />
+                <span className="text-white text-sm">info@amwik.org</span>
               </div>
             </div>
           </div>
 
           {/* Upcoming Event */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">Upcoming Event</h3>
+            <h3 className="text-lg font-semibold mb-4 text-white">Upcoming Event</h3>
             <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
               <Image
                 src="https://amwik.org/wp-content/uploads/2025/07/WhatsApp-Image-2025-07-21-at-12.59.08-PM.jpeg"
@@ -135,11 +135,11 @@ export default function Footer() {
                 height={120}
                 className="w-full h-24 object-cover rounded mb-3"
               />
-              <h4 className="font-semibold text-sm mb-2">Annual Media Conference 2024</h4>
-              <p className="text-xs text-gray-300 mb-2">March 15, 2024 • Nairobi Serena Hotel</p>
+              <h4 className="font-semibold text-sm mb-2 text-white">UN WOMEN Anniversary 2025</h4>
+              <p className="text-xs text-white mb-2">June 16, 2024 • Alliance Francaise</p>
               <Link
                 href="/events"
-                className="text-[var(--amwik-orange)] hover:text-orange-300 text-xs font-medium transition-colors"
+                className="text-[#78B43C] hover:text-green-300 text-xs font-medium transition-colors"
               >
                 Learn More →
               </Link>
@@ -148,18 +148,18 @@ export default function Footer() {
         </div>
 
         {/* Testimonials Section */}
-        <div className="mt-12 pt-8 border-t border-purple-700">
-          <h3 className="text-xl font-semibold mb-6 text-center">What Our Members Say</h3>
+        <div className="mt-12 pt-8 border-t border-purple-400/30">
+          <h3 className="text-xl font-semibold mb-6 text-center text-white">What Our Members Say</h3>
           <div className="relative max-w-4xl mx-auto">
             <div className="bg-white/10 rounded-lg p-6 backdrop-blur-sm">
               <div className="text-center">
-                <blockquote className="text-lg italic text-gray-200 mb-4 leading-relaxed">
+                <blockquote className="text-lg italic text-white mb-4 leading-relaxed">
                   "{testimonials[currentTestimonial].text}"
                 </blockquote>
-                <cite className="text-[var(--amwik-orange)] font-semibold">
+                <cite className="text-[#78B43C] font-semibold">
                   - {testimonials[currentTestimonial].author}
                 </cite>
-                <p className="text-gray-300 text-sm mt-1">{testimonials[currentTestimonial].position}</p>
+                <p className="text-white text-sm mt-1">{testimonials[currentTestimonial].position}</p>
               </div>
             </div>
 
@@ -186,7 +186,7 @@ export default function Footer() {
                   key={index}
                   onClick={() => setCurrentTestimonial(index)}
                   className={`w-2 h-2 rounded-full transition-all ${
-                    index === currentTestimonial ? "bg-[var(--amwik-orange)]" : "bg-white/30"
+                    index === currentTestimonial ? "bg-[#78B43C]" : "bg-white/30"
                   }`}
                   aria-label={`Go to testimonial ${index + 1}`}
                 />
@@ -195,8 +195,8 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-purple-700 mt-8 pt-8 text-center">
-          <p className="text-gray-300">
+        <div className="border-t border-purple-400/30 mt-8 pt-8 text-center">
+          <p className="text-white">
             &copy; {new Date().getFullYear()} Association of Media Women in Kenya (AMWIK). All rights reserved.
           </p>
         </div>

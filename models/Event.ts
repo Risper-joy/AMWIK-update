@@ -6,8 +6,8 @@ export interface IEvent extends Document {
   fullDescription: string;
   category: string;
   type: string;
-  startDate: string;
-  endDate: string;
+  startDate: Date;
+  endDate: Date;
   startTime: string;
   endTime: string;
   timezone: string;
@@ -20,14 +20,14 @@ export interface IEvent extends Document {
   organizer: string;
   contactEmail: string;
   contactPhone: string;
-  capacity: string;
+  capacity: number;
   registrationRequired: boolean;
-  registrationDeadline: string;
-  price: string;
+  registrationDeadline: Date;
+  price: number;
   currency: string;
-  earlyBirdPrice: string;
-  earlyBirdDeadline: string;
-  tags: string;
+  earlyBirdPrice: number;
+  earlyBirdDeadline: Date;
+  tags: string[];
   featuredImage?: string;
   status: string;
   featured: boolean;
@@ -35,18 +35,18 @@ export interface IEvent extends Document {
   sendReminders: boolean;
   metaTitle: string;
   metaDescription: string;
-  createdDate: string;
+  createdDate: Date;
 }
 
 const EventSchema: Schema = new Schema(
   {
-    title: String,
+    title: { type: String, required: true },
     description: String,
     fullDescription: String,
     category: String,
     type: String,
-    startDate: String,
-    endDate: String,
+    startDate: Date,
+    endDate: Date,
     startTime: String,
     endTime: String,
     timezone: String,
@@ -59,14 +59,14 @@ const EventSchema: Schema = new Schema(
     organizer: String,
     contactEmail: String,
     contactPhone: String,
-    capacity: String,
+    capacity: Number,
     registrationRequired: Boolean,
-    registrationDeadline: String,
-    price: String,
+    registrationDeadline: Date,
+    price: Number,
     currency: String,
-    earlyBirdPrice: String,
-    earlyBirdDeadline: String,
-    tags: String,
+    earlyBirdPrice: Number,
+    earlyBirdDeadline: Date,
+    tags: [String], // ✅ fixed
     featuredImage: String,
     status: String,
     featured: Boolean,
@@ -74,7 +74,7 @@ const EventSchema: Schema = new Schema(
     sendReminders: Boolean,
     metaTitle: String,
     metaDescription: String,
-    createdDate: String,
+    createdDate: { type: Date, default: Date.now },
   },
   { timestamps: true }
 );

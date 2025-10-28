@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
 import { Button } from "@/components/ui/button"
@@ -11,87 +11,25 @@ import { Badge } from "@/components/ui/badge"
 import { Search, Calendar, MapPin, Clock, Users, ExternalLink, Filter } from "lucide-react"
 import Image from "next/image"
 
-const events = [
-  {
-    id: 1,
-    title: "MEDIA CAPACITY WORKSHOP ON GENDER RESPONSIVE PROCUREMENT",
-    description:
-      "Join us for our flagship conference featuring keynote speakers, panel discussions, and networking opportunities for women in media.",
-    date: "2024-03-15",
-    time: "09:00 AM - 05:00 PM",
-    location: "Nairobi Serena Hotel, Nairobi",
-    type: "Conference",
-    status: "upcoming",
-    image: "https://amwik.org/wp-content/uploads/2025/08/WhatsApp-Image-2025-08-15-at-9.34.46-AM.jpeg",
-    tags: ["Networking", "Professional Development", "Keynote"],
-  },
-  {
-    title: "ENHANCING NATURE CRIMES REPORTING AND COMMUNITY AWARENESS",
-    description:
-      "Learn the role of media in reporting nature crimes and enhancing community awareness.",
-    date: "2024-02-28",
-    time: "10:00 AM - 04:00 PM",
-    location: "Kajiado",
-    type: "Workshop",
-    capacity: 50,
-    registered: 38,
-    price: "Free",
-    image: "https://amwik.org/wp-content/uploads/2025/08/WhatsApp-Image-2025-08-15-at-09.33.59_05600a43-955x530.jpg",
-    tags: ["Digital Media", "Skills Training", "Hands-on"],
-  },
-  {
-    id: 3,
-    title: "Gender Policies Meeting",
-    description:
-      "Join us for a meeting to discuss and Gender Policies in Kenya.",
-    date: "2024-02-20",
-    time: "06:00 PM - 08:00 PM",
-    location: "Kusyombunguo,Makueni",
-    type: "in-Person",
-    capacity: 200,
-    registered: 156,
-    price: "Free",
-    image: "https://amwik.org/wp-content/uploads/2025/08/WhatsApp-Image-2025-08-05-at-23.06.23_7ef5f271.jpg",
-    tags: ["Leadership", "Virtual", "Panel"],
-  },
-  {
-    id: 4,
-    title: "Leaders Forum",
-    description:
-      "",
-    date: "2024-02-10",
-    time: "09:00 AM - 01:00 PM",
-    location: "Virtual Event (X-space)",
-    type: "Training",
-    status: "past",
-    image: "https://amwik.org/wp-content/uploads/2025/07/WhatsApp-Image-2025-07-21-at-12.59.09-PM-1-955x530.jpeg",
-    tags: ["Ethics", "Standards", "Training"],
-  },
-  {
-    id: 5,
-    title: "UN WOMEN 15 YEARS ANNIVERSARY",
-    description: "Advanced masterclass on investigative reporting techniques, source protection, and data journalism.",
-    date: "2024-01-25",
-    time: "09:00 AM - 05:00 PM",
-    location: "Alliance Francais, Nairobi",
-    type: "Masterclass",
-    status: "past",
-    image: "https://amwik.org/wp-content/uploads/2025/07/WhatsApp-Image-2025-07-21-at-12.59.08-PM.jpeg",
-    tags: [ "Advanced", "Gender Advocacy"],
-  },
-  {
-    id: 6,
-    title: "AMWIK AGM 2025",
-    description: "",
-    date: "2024-01-15",
-    time: "09:00 AM - 05:00 PM",
-    location: "Best Western plus Meridian Hotel",
-    type: "Training Program",
-    status: "past",
-    image: "https://amwik.org/wp-content/uploads/2025/06/AWIK-ELECTION.jpeg",
-    tags: ["Community Radio", "Management", "Multi-day"],
-  },
-]
+interface Event {
+  _id: string
+  title: string
+  description: string
+  startDate: string
+  endDate: string
+  startTime: string
+  endTime: string
+  venue: string
+  city: string
+  country: string
+  type: string
+  status: string
+  price: string
+  capacity?: number
+  tags?: string[]
+  featuredImage?: string
+  registered?: number
+}
 
 const eventTypes = [
   "All Types",
@@ -105,58 +43,65 @@ const eventTypes = [
 const eventStatus = ["All Events", "Upcoming", "Past"]
 
 export default function EventsPage() {
+  const [events, setEvents] = useState<Event[]>([])
+  const [filteredEvents, setFilteredEvents] = useState<Event[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedType, setSelectedType] = useState("All Types")
   const [selectedStatus, setSelectedStatus] = useState("All Events")
   const [sortBy, setSortBy] = useState("date-desc")
-  const [filteredEvents, setFilteredEvents] = useState(events)
+
+  // Fetch events from backend
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const res = await fetch("/api/events")
+        const data = await res.json()
+        setEvents(data)
+        setFilteredEvents(data)
+      } catch (error) {
+        console.error("Failed to fetch events:", error)
+      }
+    }
+    fetchEvents()
+  }, [])
 
   // Filter and search functionality
-  const handleSearch = () => {
-    let filtered = events
+  useEffect(() => {
+    let filtered = [...events]
 
-    // Filter by search term
     if (searchTerm) {
       filtered = filtered.filter(
         (event) =>
           event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          event.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          event.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          event.tags.some((tag) => tag.toLowerCase().includes(searchTerm.toLowerCase())),
+          event.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          event.venue?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          event.tags?.some((tag) => tag.toLowerCase().includes(searchTerm.toLowerCase())),
       )
     }
 
-    // Filter by type
     if (selectedType !== "All Types") {
       filtered = filtered.filter((event) => event.type === selectedType)
     }
 
-    // Filter by status
     if (selectedStatus !== "All Events") {
-      filtered = filtered.filter((event) => event.status === selectedStatus.toLowerCase())
+      filtered = filtered.filter((event) => event.status === selectedStatus)
     }
 
-    // Sort events
     if (sortBy === "date-desc") {
-      filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      filtered.sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())
     } else if (sortBy === "date-asc") {
-      filtered.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      filtered.sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
     } else if (sortBy === "title") {
       filtered.sort((a, b) => a.title.localeCompare(b.title))
     } else if (sortBy === "popularity") {
-      filtered.sort((a, b) => b.registered - a.registered)
+      filtered.sort((a, b) => (b.registered || 0) - (a.registered || 0))
     }
 
     setFilteredEvents(filtered)
-  }
-
-  // Apply filters whenever search term, type, status, or sort changes
-  useState(() => {
-    handleSearch()
-  }, [searchTerm, selectedType, selectedStatus, sortBy])
+  }, [searchTerm, selectedType, selectedStatus, sortBy, events])
 
   const getStatusColor = (status: string) => {
-    switch (status) {
+    switch (status?.toLowerCase()) {
       case "upcoming":
         return "bg-green-100 text-green-800"
       case "past":
@@ -187,7 +132,7 @@ export default function EventsPage() {
     <div className="min-h-screen">
       <Navigation />
 
-      {/* Hero Section */}
+      {/* Hero */}
       <section className="relative text-white py-16">
         <div
           className="absolute inset-0 bg-cover bg-center z-0"
@@ -197,19 +142,19 @@ export default function EventsPage() {
         ></div>
         <div className="absolute inset-0 bg-[var(--amwik-purple)] opacity-80 z-10"></div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-20">
-          <h1 className="text-5xl font-bold mb-4">Events</h1>
-          <p className="text-xl max-w-3xl mx-auto">
+          <h1 className="text-5xl font-bold mb-4 text-white">Events</h1>
+          <p className="text-xl max-w-3xl mx-auto text-white">
             Join our community at conferences, workshops, and training sessions designed to advance women's careers in
             media and journalism.
           </p>
         </div>
       </section>
 
-      {/* Search and Filters */}
+      {/* Filters */}
       <section className="py-8 bg-gray-50 border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
-            {/* Search Bar */}
+            {/* Search */}
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
@@ -220,7 +165,7 @@ export default function EventsPage() {
               />
             </div>
 
-            {/* Filters */}
+            {/* Dropdowns */}
             <div className="flex flex-col sm:flex-row gap-4 items-center">
               <Select value={selectedType} onValueChange={setSelectedType}>
                 <SelectTrigger className="w-48">
@@ -280,10 +225,10 @@ export default function EventsPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {filteredEvents.map((event) => (
-                <Card key={event.id} className="hover:shadow-lg transition-shadow overflow-hidden">
+                <Card key={event._id} className="hover:shadow-lg transition-shadow overflow-hidden">
                   <div className="relative">
                     <Image
-                      src={event.image || "/placeholder.svg"}
+                      src={event.featuredImage || "/placeholder.svg"}
                       alt={event.title}
                       width={400}
                       height={200}
@@ -306,47 +251,53 @@ export default function EventsPage() {
                       {/* Date and Time */}
                       <div className="flex items-center text-sm text-gray-600">
                         <Calendar className="h-4 w-4 mr-2" />
-                        <span>{new Date(event.date).toLocaleDateString()}</span>
+                        <span>{new Date(event.startDate).toLocaleDateString()}</span>
                         <Clock className="h-4 w-4 ml-4 mr-2" />
-                        <span>{event.time}</span>
+                        <span>{event.startTime}</span>
                       </div>
 
                       {/* Location */}
                       <div className="flex items-center text-sm text-gray-600">
                         <MapPin className="h-4 w-4 mr-2" />
-                        <span>{event.location}</span>
+                        <span>
+                          {event.venue}, {event.city}, {event.country}
+                        </span>
                       </div>
 
-                      {/* Capacity and Price */}
+                      {/* Capacity + Price */}
                       <div className="flex items-center justify-between text-sm">
                         <div className="flex items-center text-gray-600">
                           <Users className="h-4 w-4 mr-2" />
                           <span>
-                            {event.registered}/{event.capacity} registered
+                            {event.registered || 0}/{event.capacity || 0} registered
                           </span>
                         </div>
-                        <div className="font-semibold text-[var(--amwik-purple)]">{event.price}</div>
+                        <div className="font-semibold text-[var(--amwik-purple)]">
+                          {event.price || "Free"}
+                        </div>
                       </div>
 
-                      {/* Progress Bar */}
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-[var(--amwik-purple)] h-2 rounded-full"
-                          style={{ width: `${(event.registered / event.capacity) * 100}%` }}
-                        ></div>
-                      </div>
+                      {/* Progress */}
+                      {event.capacity && (
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div
+                            className="bg-[var(--amwik-purple)] h-2 rounded-full"
+                            style={{ width: `${((event.registered || 0) / event.capacity) * 100}%` }}
+                          ></div>
+                        </div>
+                      )}
 
                       {/* Tags */}
                       <div className="flex flex-wrap gap-1">
-                        {event.tags.slice(0, 3).map((tag) => (
+                        {event.tags?.slice(0, 3).map((tag) => (
                           <Badge key={tag} variant="secondary" className="text-xs">
                             {tag}
                           </Badge>
                         ))}
                       </div>
 
-                      {/* Action Button */}
-                      {event.status === "upcoming" ? (
+                      {/* CTA */}
+                      {event.status?.toLowerCase() === "upcoming" ? (
                         <Button className="w-full bg-[var(--amwik-purple)] hover:bg-purple-700">
                           <ExternalLink className="h-4 w-4 mr-2" />
                           Register Now
@@ -362,64 +313,6 @@ export default function EventsPage() {
               ))}
             </div>
           )}
-        </div>
-      </section>
-
-      {/* Upcoming Events Summary */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Don't Miss Out</h2>
-            <p className="text-xl text-gray-600">Stay updated with our latest events and training opportunities</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <Card className="text-center">
-              <CardHeader>
-                <div className="w-16 h-16 bg-[var(--amwik-purple)] rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Calendar className="h-8 w-8 text-white" />
-                </div>
-                <CardTitle>Regular Events</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">
-                  Monthly workshops and quarterly conferences to keep you updated with industry trends.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="text-center">
-              <CardHeader>
-                <div className="w-16 h-16 bg-[var(--amwik-green)] rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Users className="h-8 w-8 text-white" />
-                </div>
-                <CardTitle>Networking</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">
-                  Connect with fellow journalists, media professionals, and industry leaders.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="text-center">
-              <CardHeader>
-                <div className="w-16 h-16 bg-[var(--amwik-orange)] rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Filter className="h-8 w-8 text-white" />
-                </div>
-                <CardTitle>Skill Building</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">
-                  Hands-on workshops and training sessions to enhance your professional skills.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="text-center mt-8">
-            <Button className="bg-[var(--amwik-purple)] hover:bg-purple-700">Subscribe to Event Updates</Button>
-          </div>
         </div>
       </section>
 

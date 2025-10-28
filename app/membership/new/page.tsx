@@ -182,8 +182,8 @@ export default function NewMembershipPage() {
         ></div>
         <div className="absolute inset-0 bg-[var(--amwik-purple)] opacity-80 z-10"></div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-20">
-          <h1 className="text-5xl font-bold mb-4">Join AMWIK</h1>
-          <p className="text-xl max-w-3xl mx-auto">
+          <h1 className="text-5xl font-bold mb-4 text-white">Join AMWIK</h1>
+          <p className="text-xl max-w-3xl mx-auto text-white">
             Become part of Kenya's premier network of women in media. Join us in our mission to empower women
             journalists and transform the media landscape.
           </p>

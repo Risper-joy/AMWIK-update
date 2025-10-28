@@ -68,11 +68,11 @@ const BlogPostSchema = new Schema<IBlogPost>({
     type: String,
     required: [true, 'Author is required'],
     enum: [
-      'sarah-wanjiku',
-      'grace-mutindi',
-      'mary-kiprotich',
-      'agnes-wanjiru',
-      'catherine-njeri'
+      'AMWIK',
+      'AMWIK Team',
+      'AMWIK AUTHOR1',
+      'AMWIK AUTHOR2',
+      'AMWIK AUTHOR3',
     ]
   },
   featuredImage: {
