@@ -1,23 +1,83 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import dynamic from "next/dynamic"
 import Navigation from "@/components/navigation"
-import HeroSlideshow from "@/components/hero-slideshow"
 import StatsCards from "@/components/stats-cards"
 import Footer from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Calendar, User, MapPin, Clock } from "lucide-react"
+import { Calendar, User, MapPin, Clock, Users, BookOpen, DollarSign, Heart, Briefcase, ArrowRight } from "lucide-react"
 import Image from "next/image"
-import { Users, BookOpen, Award, Heart, Shield, ArrowRight } from "lucide-react"
 import Link from "next/link"
+
+const HeroSlideshow = dynamic(() => import("@/components/hero-slideshow"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-[400px] w-full items-center justify-center bg-gray-100">
+      Loading Hero...
+    </div>
+  ), 
+})
+
+const programs = [
+  {
+    id: 1,
+    title: "Gender and Governance",
+    description: "Promoting gender equality and women's participation in governance and decision-making processes.",
+    icon: Users,
+    color: "bg-pink-100 text-pink-600",
+  },
+  {
+    id: 2,
+    title: "Media Development",
+    description: "Building capacity and skills for women journalists through comprehensive training programs.",
+    icon: BookOpen,
+    color: "bg-green-100 text-green-600",
+  },
+  {
+    id: 3,
+    title: "Economic Empowerment",
+    description: "Supporting women's economic independence through entrepreneurship and financial literacy.",
+    icon: DollarSign,
+    color: "bg-gray-100 text-gray-600",
+  },
+  {
+    id: 4,
+    title: "Sexual Health & Rights",
+    description: "Advocating for sexual health and reproductive rights through media awareness.",
+    icon: Heart,
+    color: "bg-blue-100 text-blue-600",
+  },
+  {
+    id: 5,
+    title: "Career Development",
+    description: "Comprehensive career support and professional development opportunities.",
+    icon: Briefcase,
+    color: "bg-orange-100 text-orange-600",
+  },
+]
 
 export default function HomePage() {
   const [featuredBlogs, setFeaturedBlogs] = useState<any[]>([])
   const [upcomingEvents, setUpcomingEvents] = useState<any[]>([])
 
-  // Fetch blogs
+  useEffect(() => {
+    const handleChunkError = (e: ErrorEvent) => {
+      if (e.message && e.message.includes('ChunkLoadError')) {
+        console.error('ChunkLoadError detected, forcing page reload...');
+        window.location.reload(); 
+      }
+    };
+
+    window.addEventListener('error', handleChunkError);
+
+    return () => {
+      window.removeEventListener('error', handleChunkError);
+    };
+  }, []); 
+
   useEffect(() => {
     const fetchBlogs = async () => {
       try {
@@ -30,7 +90,6 @@ export default function HomePage() {
           )
           setFeaturedBlogs(sorted.slice(0, 3))
         } else if (result.success && Array.isArray(result.data)) {
-          // fallback if API wraps in { success, data }
           const sorted = result.data.sort(
             (a: any, b: any) =>
               new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
@@ -44,7 +103,6 @@ export default function HomePage() {
     fetchBlogs()
   }, [])
 
-  // Fetch events
   useEffect(() => {
     const fetchEvents = async () => {
       try {
@@ -68,8 +126,42 @@ export default function HomePage() {
   return (
     <div className="min-h-screen">
       <Navigation />
-      <HeroSlideshow />
+      
+      <HeroSlideshow /> 
+      
       <StatsCards />
+
+      {/* Programs Section */}
+      <section className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">Our Programs</h2>
+            <p className="text-xl text-gray-600">Empowering women through comprehensive initiatives and support</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {programs.map((program) => (
+              <Card key={program.id} className="hover:shadow-lg transition-shadow">
+                <CardHeader>
+                  <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-4 ${program.color}`}>
+                    <program.icon className="h-8 w-8" />
+                  </div>
+                  <CardTitle className="text-xl">{program.title}</CardTitle>
+                  <CardDescription className="text-base">{program.description}</CardDescription>
+                </CardHeader>
+              </Card>
+            ))}
+          </div>
+
+          <div className="text-center mt-8">
+            <Link href="/about/programs">
+              <Button className="bg-[var(--amwik-purple)] hover:bg-purple-700">
+                Learn More About Our Programs <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
 
       {/* Join Our Community Section */}
       <section className="py-16 bg-[var(--amwik-purple)] text-white">
@@ -100,9 +192,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
-      {/* Programs Preview */}
-      {/* (your Programs Preview section stays the same) */}
 
       {/* Latest Blogs Section */}
       <section className="py-16 bg-white">
@@ -183,7 +272,7 @@ export default function HomePage() {
               <Card key={event._id} className="hover:shadow-lg transition-shadow overflow-hidden">
                 <div className="relative">
                   <Image
-                    src={event.featuredImage || "/placeholder.svg"} // ✅ fixed
+                    src={event.featuredImage || "/placeholder.svg"}
                     alt={event.title}
                     width={400}
                     height={200}
@@ -206,7 +295,6 @@ export default function HomePage() {
 
                 <CardContent>
                   <div className="space-y-3">
-                    {/* Date and Time */}
                     <div className="flex items-center text-sm text-gray-600">
                       <Calendar className="h-4 w-4 mr-2" />
                       <span>{new Date(event.startDate).toLocaleDateString()}</span>
@@ -218,7 +306,6 @@ export default function HomePage() {
                       )}
                     </div>
 
-                    {/* Location */}
                     <div className="flex items-center text-sm text-gray-600">
                       <MapPin className="h-4 w-4 mr-2" />
                       <span>
@@ -226,7 +313,6 @@ export default function HomePage() {
                       </span>
                     </div>
 
-                    {/* Capacity and Price */}
                     {event.capacity && (
                       <div className="flex items-center justify-between text-sm">
                         <div className="flex items-center text-gray-600">
@@ -241,7 +327,6 @@ export default function HomePage() {
                       </div>
                     )}
 
-                    {/* Progress Bar */}
                     {event.capacity && (
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div
@@ -253,7 +338,6 @@ export default function HomePage() {
                       </div>
                     )}
 
-                    {/* Register Button */}
                     <Button className="w-full bg-[var(--amwik-purple)] hover:bg-purple-700">
                       Register Now
                     </Button>

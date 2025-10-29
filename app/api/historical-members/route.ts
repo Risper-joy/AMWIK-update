@@ -1,4 +1,4 @@
-// app/api/historical-members/route.ts
+// File: app/api/historical-members/route.ts
 import { NextRequest, NextResponse } from "next/server"
 import { MongoClient, ObjectId } from "mongodb"
 
@@ -53,16 +53,24 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validate required fields
-    const validMembers = members.filter(member => 
-      member.name && 
-      member.name.trim() && 
-      member.year
-    )
+    // Validate and standardize data format
+    const validMembers = members
+      .map(member => ({
+        name: (member.name || "").trim(),
+        organisation: (member.organisation || member.organization || "").trim(),
+        email: (member.email || "").trim(),
+        phone: (member.phone || "").trim(),
+        year: member.year,
+        uploadDate: new Date().toISOString(),
+        source: "csv_upload",
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }))
+      .filter(member => member.name && member.year) // Must have name and year
 
     if (validMembers.length === 0) {
       return NextResponse.json(
-        { message: "No valid members found in the data." },
+        { message: "No valid members found in the data. Each member must have a name and year." },
         { status: 400 }
       )
     }
@@ -71,25 +79,16 @@ export async function POST(request: NextRequest) {
     const db = client.db(DB_NAME)
     const collection = db.collection("historical_members")
 
-    // Add timestamps and clean data
-    const membersToInsert = validMembers.map(member => ({
-      name: member.name.trim(),
-      organisation: (member.organisation || "").trim(),
-      email: (member.email || "").trim(),
-      phone: (member.phone || "").trim(),
-      year: member.year,
-      uploadDate: new Date().toISOString(),
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }))
-
     // Insert all members
-    const result = await collection.insertMany(membersToInsert)
+    const result = await collection.insertMany(validMembers)
+
+    console.log(`✅ Successfully inserted ${result.insertedCount} historical members from CSV`)
 
     return NextResponse.json({
       message: "Historical members uploaded successfully",
       count: result.insertedCount,
-      insertedIds: result.insertedIds
+      insertedIds: result.insertedIds,
+      format: "name, organisation, email, phone, year, uploadDate, source"
     })
   } catch (error) {
     console.error("Error uploading historical members:", error)
@@ -100,15 +99,13 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// app/api/historical-members/[id]/route.ts
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+// DELETE - Delete a specific historical member
+export async function DELETE(request: NextRequest) {
   try {
-    const { id } = params
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get("id")
 
-    if (!ObjectId.isValid(id)) {
+    if (!id || !ObjectId.isValid(id)) {
       return NextResponse.json(
         { message: "Invalid member ID" },
         { status: 400 }

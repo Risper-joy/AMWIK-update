@@ -7,7 +7,6 @@ export interface IMember extends mongoose.Document {
   phone: string
   date_of_birth?: Date
   nationality?: string
-  id_number?: string
   current_position: string
   organization: string
   years_experience?: string
@@ -15,12 +14,7 @@ export interface IMember extends mongoose.Document {
   specialization?: string
   education?: string
   membership_type: string
-  interests?: string[]
   motivation: string
-  referee1_name?: string
-  referee1_contact?: string
-  referee2_name?: string
-  referee2_contact?: string
   status: string
   terms_accepted: boolean
   application_date: Date
@@ -59,10 +53,6 @@ const MemberSchema = new mongoose.Schema<IMember>({
     type: String,
     trim: true
   },
-  id_number: {
-    type: String,
-    trim: true
-  },
   current_position: {
     type: String,
     required: true,
@@ -96,39 +86,9 @@ const MemberSchema = new mongoose.Schema<IMember>({
     required: true,
     enum: ['Full Membership', 'Associate Membership']
   },
-  interests: [{
-    type: String,
-    enum: [
-      'Professional Development',
-      'Networking Events',
-      'Mentorship Programs',
-      'Gender Advocacy',
-      'Media Ethics',
-      'Digital Skills',
-      'Leadership Training',
-      'Research & Publications',
-      'Policy Advocacy'
-    ]
-  }],
   motivation: {
     type: String,
     required: true,
-    trim: true
-  },
-  referee1_name: {
-    type: String,
-    trim: true
-  },
-  referee1_contact: {
-    type: String,
-    trim: true
-  },
-  referee2_name: {
-    type: String,
-    trim: true
-  },
-  referee2_contact: {
-    type: String,
     trim: true
   },
   status: {

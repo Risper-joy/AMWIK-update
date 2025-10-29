@@ -1,26 +1,26 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import jwt from "jsonwebtoken";
 
-const SECRET = process.env.JWT_SECRET || "amwik_secret";
+export function middleware(request: NextRequest) {
+  const pathname = request.nextUrl.pathname;
 
-export function middleware(req: NextRequest) {
-  const token = req.cookies.get("authToken")?.value;
-  const { pathname } = req.nextUrl;
+  // Skip middleware for these paths
+  if (
+    pathname === "/admin/login" ||
+    pathname === "/admin/signup" ||
+    pathname.startsWith("/api/") ||
+    pathname.startsWith("/_next") ||
+    pathname === "/favicon.ico"
+  ) {
+    return NextResponse.next();
+  }
 
-  if (pathname.startsWith("/admin") && !pathname.startsWith("/admin/login") && !pathname.startsWith("/admin/signup")) {
+  // Check for admin routes
+  if (pathname.startsWith("/admin")) {
+    const token = request.cookies.get("authToken")?.value;
+
     if (!token) {
-      return NextResponse.redirect(new URL("/admin/login", req.url));
-    }
-
-    try {
-      const decoded = jwt.verify(token, SECRET) as { role: string };
-
-      if (decoded.role === "memberOfficer" && !pathname.includes("/admin/members")) {
-        return NextResponse.redirect(new URL("/unauthorized", req.url));
-      }
-    } catch (err) {
-      return NextResponse.redirect(new URL("/admin/login", req.url));
+      return NextResponse.redirect(new URL("/admin/login", request.url));
     }
   }
 
@@ -28,5 +28,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };

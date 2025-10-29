@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import HeroSection from "@/components/hero-section"
-import { Check, CreditCard, Smartphone, Building, RefreshCw } from "lucide-react"
+import { Check, RefreshCw } from "lucide-react"
 import useRenewals from "@/hooks/useRenewals"
 
 const membershipTypes = [
@@ -56,7 +56,6 @@ export default function RenewMembershipPage() {
     phone: "",
     dateOfBirth: "",
     nationality: "Kenyan",
-    idNumber: "",
 
     // Contact Information
     address: "",
@@ -67,9 +66,6 @@ export default function RenewMembershipPage() {
     // Professional Information
     organization: "",
     position: "",
-    workAddress: "",
-    workPhone: "",
-    workEmail: "",
     yearsOfExperience: "",
     mediaExperience: "",
 
@@ -77,17 +73,12 @@ export default function RenewMembershipPage() {
     membershipType: "",
     renewalPeriod: "1-year",
 
-    // Interests and Involvement
-    interests: [] as string[],
+    // Involvement
     volunteerInterest: false,
     mentorshipInterest: false,
 
-    // Payment Information
-    paymentMethod: "",
-
     // Additional Information
     specialRequests: "",
-    referralSource: "",
 
     // Agreements
     termsAccepted: false,
@@ -101,15 +92,6 @@ export default function RenewMembershipPage() {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
-    }))
-  }
-
-  const handleInterestChange = (interest: string, checked: boolean) => {
-    setFormData((prev) => ({
-      ...prev,
-      interests: checked
-        ? [...prev.interests, interest]
-        : prev.interests.filter((i) => i !== interest),
     }))
   }
 
@@ -141,8 +123,6 @@ export default function RenewMembershipPage() {
       alert("Error submitting renewal")
     }
   }
-
-  const selectedMembership = membershipTypes.find((m) => m.type === formData.membershipType)
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -190,7 +170,7 @@ export default function RenewMembershipPage() {
                     <SelectContent>
                       <SelectItem value="Full Membership">Full Membership</SelectItem>
                       <SelectItem value="Associate Membership">Associate Membership</SelectItem>
-                      <SelectItem value="Corporate Membership">Corporate Membership</SelectItem>
+                      
                     </SelectContent>
                   </Select>
                 </div>
@@ -249,7 +229,7 @@ export default function RenewMembershipPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="dateOfBirth">Date of Birth</Label>
                   <Input
@@ -271,14 +251,6 @@ export default function RenewMembershipPage() {
                       <SelectItem value="Other">Other</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
-                <div>
-                  <Label htmlFor="idNumber">ID/Passport Number</Label>
-                  <Input
-                    id="idNumber"
-                    value={formData.idNumber}
-                    onChange={(e) => handleInputChange("idNumber", e.target.value)}
-                  />
                 </div>
               </div>
             </CardContent>
@@ -355,35 +327,6 @@ export default function RenewMembershipPage() {
                     value={formData.position}
                     onChange={(e) => handleInputChange("position", e.target.value)}
                     required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="workAddress">Work Address</Label>
-                <Input
-                  id="workAddress"
-                  value={formData.workAddress}
-                  onChange={(e) => handleInputChange("workAddress", e.target.value)}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="workPhone">Work Phone</Label>
-                  <Input
-                    id="workPhone"
-                    value={formData.workPhone}
-                    onChange={(e) => handleInputChange("workPhone", e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="workEmail">Work Email</Label>
-                  <Input
-                    id="workEmail"
-                    type="email"
-                    value={formData.workEmail}
-                    onChange={(e) => handleInputChange("workEmail", e.target.value)}
                   />
                 </div>
               </div>
@@ -474,86 +417,30 @@ export default function RenewMembershipPage() {
             </CardContent>
           </Card>
 
-          {/* Interests */}
+          {/* Involvement */}
           <Card>
             <CardHeader>
-              <CardTitle>Areas of Interest</CardTitle>
-              <CardDescription>Update your areas of interest and involvement preferences</CardDescription>
+              <CardTitle>AMWIK Involvement</CardTitle>
+              <CardDescription>Let us know how you'd like to participate</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label className="text-base font-medium">Professional Interests (Select all that apply)</Label>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-3">
-                  {[
-                    "Investigative Journalism","Digital Media","Broadcast Journalism","Print Media","Media Ethics",
-                    "Community Media","Media Law","Public Relations","Media Entrepreneurship","Documentary Production",
-                    "Social Media","Media Training",
-                  ].map((interest) => (
-                    <div key={interest} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={interest}
-                        checked={formData.interests.includes(interest)}
-                        onCheckedChange={(checked) => handleInterestChange(interest, checked as boolean)}
-                      />
-                      <Label htmlFor={interest} className="text-sm cursor-pointer">{interest}</Label>
-                    </div>
-                  ))}
-                </div>
+            <CardContent className="space-y-3">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="volunteerInterest"
+                  checked={formData.volunteerInterest}
+                  onCheckedChange={(checked) => handleInputChange("volunteerInterest", checked)}
+                />
+                <Label htmlFor="volunteerInterest" className="cursor-pointer">I am interested in volunteering for AMWIK activities</Label>
               </div>
 
-              <div className="space-y-3">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="volunteerInterest"
-                    checked={formData.volunteerInterest}
-                    onCheckedChange={(checked) => handleInputChange("volunteerInterest", checked)}
-                  />
-                  <Label htmlFor="volunteerInterest" className="cursor-pointer">I am interested in volunteering for AMWIK activities</Label>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="mentorshipInterest"
-                    checked={formData.mentorshipInterest}
-                    onCheckedChange={(checked) => handleInputChange("mentorshipInterest", checked)}
-                  />
-                  <Label htmlFor="mentorshipInterest" className="cursor-pointer">I would like to participate in the mentorship program</Label>
-                </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="mentorshipInterest"
+                  checked={formData.mentorshipInterest}
+                  onCheckedChange={(checked) => handleInputChange("mentorshipInterest", checked)}
+                />
+                <Label htmlFor="mentorshipInterest" className="cursor-pointer">I would like to participate in the mentorship program</Label>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Payment Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Payment Information</CardTitle>
-              <CardDescription>Select your preferred payment method</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <RadioGroup
-                value={formData.paymentMethod}
-                onValueChange={(value) => handleInputChange("paymentMethod", value)}
-                className="grid grid-cols-1 md:grid-cols-3 gap-4"
-              >
-                <div className="flex items-center space-x-2 border rounded-lg p-4">
-                  <RadioGroupItem value="M-Pesa" id="mpesa" />
-                  <Label htmlFor="mpesa" className="flex items-center cursor-pointer">
-                    <Smartphone className="h-4 w-4 mr-2" /> M-Pesa
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2 border rounded-lg p-4">
-                  <RadioGroupItem value="Bank Transfer" id="bank" />
-                  <Label htmlFor="bank" className="flex items-center cursor-pointer">
-                    <Building className="h-4 w-4 mr-2" /> Bank Transfer
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2 border rounded-lg p-4">
-                  <RadioGroupItem value="Credit Card" id="card" />
-                  <Label htmlFor="card" className="flex items-center cursor-pointer">
-                    <CreditCard className="h-4 w-4 mr-2" /> Credit Card
-                  </Label>
-                </div>
-              </RadioGroup>
             </CardContent>
           </Card>
 
@@ -562,7 +449,7 @@ export default function RenewMembershipPage() {
             <CardHeader>
               <CardTitle>Additional Information</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent>
               <div>
                 <Label htmlFor="specialRequests">Special Requests or Accommodations</Label>
                 <Textarea
@@ -570,15 +457,6 @@ export default function RenewMembershipPage() {
                   value={formData.specialRequests}
                   onChange={(e) => handleInputChange("specialRequests", e.target.value)}
                   placeholder="Enter any special requests or accommodations needed"
-                />
-              </div>
-              <div>
-                <Label htmlFor="referralSource">How did you hear about AMWIK?</Label>
-                <Input
-                  id="referralSource"
-                  value={formData.referralSource}
-                  onChange={(e) => handleInputChange("referralSource", e.target.value)}
-                  placeholder="Referral source"
                 />
               </div>
             </CardContent>

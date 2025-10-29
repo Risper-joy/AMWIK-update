@@ -4,18 +4,13 @@ import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-} from "@/components/ui/navigation-menu"
-import { Menu, X } from "lucide-react"
+import { Menu, X, ChevronDown } from "lucide-react"
 
 export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false)
+  const [aboutOpen, setAboutOpen] = useState(false)
+  const [membershipOpen, setMembershipOpen] = useState(false)
+  const [resourcesOpen, setResourcesOpen] = useState(false)
 
   return (
     <nav className="bg-white shadow-lg sticky top-0 z-50">
@@ -35,124 +30,127 @@ export default function Navigation() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-6">
-            <NavigationMenu>
-              <NavigationMenuList>
-                <NavigationMenuItem>
-                  <Link href="/" legacyBehavior passHref>
-                    <NavigationMenuLink className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-[var(--amwik-purple)]">
-                      Home
-                    </NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
+            <Link href="/" className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-[var(--amwik-purple)]">
+              Home
+            </Link>
 
-                {/* About Dropdown */}
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger>About</NavigationMenuTrigger>
-                  <NavigationMenuContent className="bg-white shadow-lg rounded-md">
-                    <div className="grid gap-3 p-4 w-[400px]">
-                      <Link
-                        href="/about/programs"
-                        className="block p-2 hover:bg-purple-100 rounded"
-                      >
-                        Our Programs
-                      </Link>
-                      <Link
-                        href="/about/partners"
-                        className="block p-2 hover:bg-purple-100 rounded"
-                      >
-                        Our Partners
-                      </Link>
-                      <Link
-                        href="/about/team"
-                        className="block p-2 hover:bg-purple-100 rounded"
-                      >
-                        Our Team
-                      </Link>
-                    </div>
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
+            {/* About Dropdown */}
+            <div 
+              className="relative"
+              onMouseEnter={() => setAboutOpen(true)}
+              onMouseLeave={() => setAboutOpen(false)}
+            >
+              <button className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-[var(--amwik-purple)] flex items-center">
+                About
+                <ChevronDown className={`ml-1 h-3 w-3 transition-transform duration-200 ${aboutOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {aboutOpen && (
+                <div className="absolute left-0 top-full mt-1 w-[300px] bg-white shadow-lg rounded-md border z-50">
+                  <div className="grid gap-1 p-2">
+                    <Link
+                      href="/about/programs"
+                      className="block p-2 hover:bg-purple-100 rounded text-gray-700"
+                    >
+                      Our Programs
+                    </Link>
+                    <Link
+                      href="/about/partners"
+                      className="block p-2 hover:bg-purple-100 rounded text-gray-700"
+                    >
+                      Our Partners
+                    </Link>
+                    <Link
+                      href="/about/team"
+                      className="block p-2 hover:bg-purple-100 rounded text-gray-700"
+                    >
+                      Our Team
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
 
-                <NavigationMenuItem>
-                  <Link href="/events" legacyBehavior passHref>
-                    <NavigationMenuLink className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-[var(--amwik-purple)]">
-                      Events
-                    </NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
+            <Link href="/events" className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-[var(--amwik-purple)]">
+              Events
+            </Link>
 
-                {/* Membership Dropdown */}
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger>Membership</NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <div className="grid gap-3 p-4 w-[300px]">
-                      <Link
-                        href="/membership/new"
-                        className="block p-2 hover:bg-purple-100 rounded"
-                      >
-                        New Membership
-                      </Link>
-                      <Link
-                        href="/membership/renew"
-                        className="block p-2 hover:bg-purple-100 rounded"
-                      >
-                        Renew Membership
-                      </Link>
-                      <Link
-                        href="/membership/career-center"
-                        className="block p-2 hover:bg-purple-100 rounded"
-                      >
-                        Career Center
-                      </Link>
-                    </div>
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
+            {/* Membership Dropdown */}
+            <div 
+              className="relative"
+              onMouseEnter={() => setMembershipOpen(true)}
+              onMouseLeave={() => setMembershipOpen(false)}
+            >
+              <button className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-[var(--amwik-purple)] flex items-center">
+                Membership
+                <ChevronDown className={`ml-1 h-3 w-3 transition-transform duration-200 ${membershipOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {membershipOpen && (
+                <div className="absolute left-0 top-full mt-1 w-[300px] bg-white shadow-lg rounded-md border z-50">
+                  <div className="grid gap-1 p-2">
+                    <Link
+                      href="/membership/new"
+                      className="block p-2 hover:bg-purple-100 rounded text-gray-700"
+                    >
+                      New Membership
+                    </Link>
+                    <Link
+                      href="/membership/renew"
+                      className="block p-2 hover:bg-purple-100 rounded text-gray-700"
+                    >
+                      Renew Membership
+                    </Link>
+                    <Link
+                      href="/membership/career-center"
+                      className="block p-2 hover:bg-purple-100 rounded text-gray-700"
+                    >
+                      Career Center
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
 
-                <NavigationMenuItem>
-                  <Link href="/blog" legacyBehavior passHref>
-                    <NavigationMenuLink className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-[var(--amwik-purple)]">
-                      Blog
-                    </NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
+            <Link href="/blog" className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-[var(--amwik-purple)]">
+              Blog
+            </Link>
 
-                <NavigationMenuItem>
-                  <Link href="/gallery" legacyBehavior passHref>
-                    <NavigationMenuLink className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-[var(--amwik-purple)]">
-                      Gallery
-                    </NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
+            <Link href="/gallery" className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-[var(--amwik-purple)]">
+              Gallery
+            </Link>
 
-                {/* Resources Dropdown */}
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger>Resources</NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <div className="grid gap-3 p-4 w-[300px]">
-                      <Link
-                        href="/resources"
-                        className="block p-2 hover:bg-purple-100 rounded"
-                      >
-                        All Resources
-                      </Link>
-                      <Link
-                        href="/resources/guidance"
-                        className="block p-2 hover:bg-purple-100 rounded"
-                      >
-                        Guidance for Female Journalists
-                      </Link>
-                    </div>
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
+            {/* Resources Dropdown */}
+            <div 
+              className="relative"
+              onMouseEnter={() => setResourcesOpen(true)}
+              onMouseLeave={() => setResourcesOpen(false)}
+            >
+              <button className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-[var(--amwik-purple)] flex items-center">
+                Resources
+                <ChevronDown className={`ml-1 h-3 w-3 transition-transform duration-200 ${resourcesOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {resourcesOpen && (
+                <div className="absolute left-0 top-full mt-1 w-[300px] bg-white shadow-lg rounded-md border z-50">
+                  <div className="grid gap-1 p-2">
+                    <Link
+                      href="/resources"
+                      className="block p-2 hover:bg-purple-100 rounded text-gray-700"
+                    >
+                      All Resources
+                    </Link>
+                    <Link
+                      href="/resources/guidance"
+                      className="block p-2 hover:bg-purple-100 rounded text-gray-700"
+                    >
+                      Guidance for Female Journalists
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
 
-                <NavigationMenuItem>
-                  <Link href="/contact" legacyBehavior passHref>
-                    <NavigationMenuLink className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-[var(--amwik-purple)]">
-                      Contact
-                    </NavigationMenuLink>
-                  </Link>
-                </NavigationMenuItem>
-              </NavigationMenuList>
-            </NavigationMenu>
+            <Link href="/contact" className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-[var(--amwik-purple)]">
+              Contact
+            </Link>
 
             {/* Donate Now Button */}
             <Link href="/donate">

@@ -17,30 +17,30 @@ import { MapPin, Phone, Mail, Clock, Send, MessageSquare, HelpCircle, Users, Cal
 
 const contactInfo = {
   address: "AMWIK House, Ngong Road, Nairobi, Kenya",
-  phone: "+254 20 123 4567",
+  phone: "+254 722-201958 |  +254 737-201958",
   email: "info@amwik.org",
   hours: "Monday - Friday: 8:00 AM - 5:00 PM",
 }
 
 const departments = [
   { name: "General Inquiries", email: "info@amwik.org", description: "General questions about AMWIK" },
-  { name: "Membership", email: "membership@amwik.org", description: "Membership applications and renewals" },
-  { name: "Training & Programs", email: "programs@amwik.org", description: "Training programs and workshops" },
-  { name: "Events", email: "events@amwik.org", description: "Event registrations and inquiries" },
-  { name: "Media & Communications", email: "media@amwik.org", description: "Press inquiries and media relations" },
-  { name: "Partnerships", email: "partnerships@amwik.org", description: "Partnership and collaboration opportunities" },
+  { name: "Membership", email: "info@amwik.org", description: "Membership applications and renewals" },
+  { name: "Training & Programs", email: "info@amwik.org", description: "Training programs and workshops" },
+  { name: "Events", email: "info@amwik.org", description: "Event registrations and inquiries" },
+  { name: "Media & Communications", email: "info@amwik.org", description: "Press inquiries and media relations" },
+  { name: "Partnerships", email: "info@amwik.org", description: "Partnership and collaboration opportunities" },
 ]
 
 const faqs = [
   {
     question: "How do I become a member of AMWIK?",
     answer:
-      "To become a member, you can apply online through our membership application form. We offer different membership categories including Full Membership, Associate Membership, and Corporate Membership.",
+      "To become a member, you can apply online through our membership application form. We offer different membership categories including Full Membership and Associate Membership",
   },
   {
     question: "What are the membership fees?",
     answer:
-      "Membership fees vary by category: Full Membership is KES 5,000 annually, Associate Membership is KES 2,500 annually, and Corporate Membership is KES 15,000 annually.",
+      "Membership fees vary by category: Full Membership is KES 3,000 annually, Associate Membership is KES 1,500 annually, and Corporate Membership is KES 15,000 annually.",
   },
   {
     question: "What training programs do you offer?",
@@ -72,11 +72,7 @@ const faqs = [
     answer:
       "Members can access our Career Center, including job listings, guides, interview prep, and career counseling.",
   },
-  {
-    question: "Can men join AMWIK?",
-    answer:
-      "Yes, men are welcome as Associate Members who support our mission. Some spaces remain women-only for empowerment.",
-  },
+  
   {
     question: "How do I report harassment or discrimination?",
     answer:

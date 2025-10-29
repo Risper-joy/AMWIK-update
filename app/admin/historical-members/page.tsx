@@ -13,6 +13,9 @@ import { ArrowLeft, Upload, FileText, Search, Users, Download, Trash2, RefreshCw
 import * as Papa from "papaparse"
 import React from "react"
 
+// Import the column mappings for robust key-finding
+import { csvColumnMappings } from "@/models/HistoricalMember" 
+
 interface HistoricalMember {
   _id?: string
   name: string
@@ -22,6 +25,31 @@ interface HistoricalMember {
   year: string
   uploadDate: string
 }
+
+/**
+ * Helper function to find the actual column key in a CSV row object,
+ * matching against a list of acceptable mappings in a case-insensitive, trimmed manner.
+ */
+const findKey = (row: any, fieldMappings: string[]) => {
+  const rowKeys = Object.keys(row)
+  // Create an array of trimmed and lowercased keys from the CSV row
+  const trimmedLowerRowKeys = rowKeys.map(key => key.toLowerCase().trim()) 
+  
+  for (const mapping of fieldMappings) {
+    // Trim and lowercase the expected mapping name
+    const targetMapping = mapping.toLowerCase().trim() 
+    
+    // Find the index of the target mapping in the processed row keys
+    const foundIndex = trimmedLowerRowKeys.indexOf(targetMapping)
+    
+    if (foundIndex !== -1) {
+      // Return the original key corresponding to the found index
+      return rowKeys[foundIndex]
+    }
+  }
+  return null // Return null if no matching key is found
+}
+
 
 export default function HistoricalMembersPage() {
   const [historicalMembers, setHistoricalMembers] = useState<HistoricalMember[]>([])
@@ -77,8 +105,25 @@ export default function HistoricalMembersPage() {
           return
         }
         
-        // Show first 5 rows for preview
-        setPreviewData(results.data.slice(0, 5))
+        // NEW: Pre-process the preview data using the robust findKey logic
+        const processedPreview = results.data
+            .slice(0, 5) // Show first 5 rows for preview
+            .map((row: any) => {
+                const nameKey = findKey(row, csvColumnMappings.name)
+                const organisationKey = findKey(row, csvColumnMappings.organisation)
+                const emailKey = findKey(row, csvColumnMappings.email)
+                const phoneKey = findKey(row, csvColumnMappings.phone)
+
+                // Return a structured object for display in the preview table
+                return {
+                    name: (row[nameKey!] || "").trim(),
+                    organisation: (row[organisationKey!] || "").trim(),
+                    email: (row[emailKey!] || "").trim(),
+                    phone: (row[phoneKey!] || "").trim(),
+                }
+            })
+        
+        setPreviewData(processedPreview)
         setShowPreview(true)
       },
       error: (error) => {
@@ -106,6 +151,7 @@ export default function HistoricalMembersPage() {
     Papa.parse(file, {
       header: true,
       skipEmptyLines: true,
+      dynamicTyping: false,
       complete: async (results) => {
         try {
           if (results.errors.length > 0) {
@@ -113,18 +159,38 @@ export default function HistoricalMembersPage() {
             return
           }
 
+          // Log column names to debug
+          if (results.data.length > 0) {
+            const firstRow = results.data[0] as Record<string, any>
+            console.log("CSV Columns:", Object.keys(firstRow))
+            console.log("First row:", firstRow)
+          }
+
           // Transform data to match our schema
-          const membersData = results.data.map((row: any) => ({
-            name: row.name || row.Name || "",
-            organisation: row.organisation || row.organization || row.Organisation || row.Organization || "",
-            email: row.email || row.Email || row["email address"] || row["Email Address"] || row["e-mail"] || row["E-mail"] || "",
-            phone: row.phone || row.Phone || row["phone number"] || row["Phone Number"] || "",
-            year: uploadYear,
-            uploadDate: new Date().toISOString()
-          })).filter(member => member.name.trim()) // Filter out empty names
+          const membersData = results.data
+            .map((row: any) => {
+              // Use the robust key finder with the imported mappings
+              const nameKey = findKey(row, csvColumnMappings.name)
+              const organisationKey = findKey(row, csvColumnMappings.organisation)
+              const emailKey = findKey(row, csvColumnMappings.email)
+              const phoneKey = findKey(row, csvColumnMappings.phone)
+
+              return {
+                // Use the found key, or an empty string if no key was found
+                name: (row[nameKey!] || "").trim(),
+                organisation: (row[organisationKey!] || "").trim(),
+                email: (row[emailKey!] || "").trim(),
+                phone: (row[phoneKey!] || "").trim(),
+                year: uploadYear,
+                uploadDate: new Date().toISOString()
+              }
+            })
+            .filter(member => member.name.trim()) // Filter out empty names
+
+          console.log("Final members data:", membersData)
 
           if (membersData.length === 0) {
-            setError("No valid member data found in CSV")
+            setError("No valid member data found in CSV. Check if 'name' column exists and has values.")
             return
           }
 
@@ -172,7 +238,7 @@ export default function HistoricalMembersPage() {
     if (!confirm("Are you sure you want to delete this historical member record?")) return
 
     try {
-      const response = await fetch(`/api/historical-members/${id}`, {
+      const response = await fetch(`/api/historical-members?id=${id}`, {
         method: "DELETE",
       })
 
@@ -364,12 +430,13 @@ export default function HistoricalMembersPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
+                      {/* NOW USING THE PROCESSED DATA FIELDS */}
                       {previewData.map((row, index) => (
                         <TableRow key={index}>
-                          <TableCell>{row.name || row.Name || "N/A"}</TableCell>
-                          <TableCell>{row.organisation || row.organization || row.Organisation || row.Organization || "N/A"}</TableCell>
-                          <TableCell>{row.email || row.Email || row["email address"] || row["Email Address"] || row["e-mail"] || row["E-mail"] || "N/A"}</TableCell>
-                          <TableCell>{row.phone || row.Phone || row["phone number"] || row["Phone Number"] || "N/A"}</TableCell>
+                          <TableCell>{row.name || "N/A"}</TableCell>
+                          <TableCell>{row.organisation || "N/A"}</TableCell>
+                          <TableCell>{row.email || "N/A"}</TableCell> 
+                          <TableCell>{row.phone || "N/A"}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -426,6 +493,7 @@ export default function HistoricalMembersPage() {
                   <TableRow>
                     <TableHead>Name</TableHead>
                     <TableHead>Organisation</TableHead>
+                    <TableHead>Email</TableHead>
                     <TableHead>Phone</TableHead>
                     <TableHead>Year</TableHead>
                     <TableHead>Upload Date</TableHead>
@@ -437,6 +505,7 @@ export default function HistoricalMembersPage() {
                     <TableRow key={member._id}>
                       <TableCell className="font-medium">{member.name}</TableCell>
                       <TableCell>{member.organisation}</TableCell>
+                      <TableCell>{member.email}</TableCell>
                       <TableCell>{member.phone}</TableCell>
                       <TableCell>
                         <Badge variant="outline">{member.year}</Badge>

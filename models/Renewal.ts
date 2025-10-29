@@ -9,26 +9,19 @@ export interface IRenewal extends Document {
   phone: string;
   dateOfBirth?: string;
   nationality?: string;
-  idNumber?: string;
   address?: string;
   city?: string;
   county?: string;
   postalCode?: string;
   organization: string;
   position: string;
-  workAddress?: string;
-  workPhone?: string;
-  workEmail?: string;
   yearsOfExperience?: string;
   mediaExperience?: string;
   membershipType: string;
   renewalPeriod: string;
-  interests: string[];
   volunteerInterest: boolean;
   mentorshipInterest: boolean;
-  paymentMethod: string;
   specialRequests?: string;
-  referralSource?: string;
   termsAccepted: boolean;
   privacyAccepted: boolean;
   communicationConsent: boolean;
@@ -47,26 +40,19 @@ const RenewalSchema = new Schema<IRenewal>({
   phone: { type: String, required: true },
   dateOfBirth: String,
   nationality: String,
-  idNumber: String,
   address: String,
   city: String,
   county: String,
   postalCode: String,
   organization: { type: String, required: true },
   position: { type: String, required: true },
-  workAddress: String,
-  workPhone: String,
-  workEmail: String,
   yearsOfExperience: String,
   mediaExperience: String,
   membershipType: String,
   renewalPeriod: String,
-  interests: [String],
   volunteerInterest: Boolean,
   mentorshipInterest: Boolean,
-  paymentMethod: String,
   specialRequests: String,
-  referralSource: String,
   termsAccepted: Boolean,
   privacyAccepted: Boolean,
   communicationConsent: Boolean,

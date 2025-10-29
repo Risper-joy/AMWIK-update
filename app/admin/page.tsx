@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Users, FileText, Calendar, ImageIcon, BookOpen, PlusCircle, Eye, TrendingUp, Database } from "lucide-react"
+import { Users, FileText, Calendar, ImageIcon, BookOpen, PlusCircle, Eye, TrendingUp, Database, LogOut } from "lucide-react"
 import {
   LineChart,
   Line,
@@ -59,13 +59,8 @@ interface DashboardData {
   }>
 }
 
-const membershipTypeData = [
-  { name: "Full Membership", color: "#8B5CF6" },
-  { name: "Associate", color: "#06B6D4" },
-  { name: "Corporate", color: "#10B981" },
-]
-
 export default function AdminDashboard() {
+  const [user, setUser] = useState<any>(null)
   const [data, setData] = useState<DashboardData>({
     members: {
       total: 0,
@@ -82,19 +77,50 @@ export default function AdminDashboard() {
     recentActivity: []
   })
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    // Get user from localStorage
+    const storedUser = localStorage.getItem("user")
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser))
+      } catch (e) {
+        console.error("Error parsing user:", e)
+      }
+    }
+  }, [])
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true)
+        setError(null)
         
+        console.log("📊 Fetching dashboard data...")
+
         // Fetch all data concurrently
         const [membersRes, blogsRes, eventsRes, resourcesRes, renewalsRes] = await Promise.all([
-          fetch("/api/members"),
-          fetch("/api/blogs"),
-          fetch("/api/events"),
-          fetch("/api/resources"),
-          fetch("/api/renewals").catch(() => ({ json: async () => [] })) // Handle if renewals endpoint doesn't exist
+          fetch("/api/members").catch(e => {
+            console.error("❌ Error fetching members:", e)
+            return { ok: false, json: async () => [] }
+          }),
+          fetch("/api/blogs").catch(e => {
+            console.error("❌ Error fetching blogs:", e)
+            return { ok: false, json: async () => [] }
+          }),
+          fetch("/api/events").catch(e => {
+            console.error("❌ Error fetching events:", e)
+            return { ok: false, json: async () => [] }
+          }),
+          fetch("/api/resources").catch(e => {
+            console.error("❌ Error fetching resources:", e)
+            return { ok: false, json: async () => [] }
+          }),
+          fetch("/api/renewals").catch(e => {
+            console.error("❌ Error fetching renewals:", e)
+            return { ok: false, json: async () => [] }
+          })
         ])
 
         const [members, blogs, events, resources, renewals] = await Promise.all([
@@ -104,6 +130,8 @@ export default function AdminDashboard() {
           resourcesRes.json(),
           renewalsRes.json()
         ])
+
+        console.log("✅ Data fetched:", { members: members?.length, blogs: blogs?.length, events: events?.length })
 
         // Process members data
         const totalMembers = (members?.length || 0) + (renewals?.length || 0)
@@ -124,10 +152,10 @@ export default function AdminDashboard() {
           m.membership_type === "Corporate Membership"
         ).length || 0
 
-        // Generate monthly growth data (last 6 months)
-        const monthlyData = generateMonthlyGrowthData(members, renewals)
+        // Generate monthly growth data
+        const monthlyData = generateMonthlyGrowthData(members || [], renewals || [])
 
-        // Process blogs data - handle both array and object with data property
+        // Process blogs data
         const blogData = blogs?.data || (Array.isArray(blogs) ? blogs : [])
         const publishedBlogs = blogData.filter((b: any) => b.status === "Published").length || 0
         const draftBlogs = blogData.filter((b: any) => b.status === "Draft").length || 0
@@ -142,7 +170,7 @@ export default function AdminDashboard() {
         // Generate recent event attendance data
         const recentAttendance = events?.slice(0, 4).map((event: any) => ({
           event: event.title.substring(0, 15) + (event.title.length > 15 ? '...' : ''),
-          attendance: Math.floor(Math.random() * 300) + 50 // Since attendance data might not be stored
+          attendance: Math.floor(Math.random() * 300) + 50
         })) || []
 
         // Process resources data
@@ -151,7 +179,7 @@ export default function AdminDashboard() {
         const totalDownloads = resources?.reduce((sum: number, r: any) => sum + (r.downloadCount || 0), 0) || 0
 
         // Generate recent activity
-        const recentActivity = generateRecentActivity(members, blogs, events, resources)
+        const recentActivity = generateRecentActivity(members || [], blogs, events || [], resources || [])
 
         // Calculate monthly growth percentage
         const monthlyGrowth = calculateMonthlyGrowth(monthlyData)
@@ -190,7 +218,8 @@ export default function AdminDashboard() {
         })
 
       } catch (error) {
-        console.error("Error fetching dashboard data:", error)
+        console.error("❌ Error fetching dashboard data:", error)
+        setError("Failed to load dashboard data. Please refresh the page.")
       } finally {
         setLoading(false)
       }
@@ -198,6 +227,17 @@ export default function AdminDashboard() {
 
     fetchDashboardData()
   }, [])
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" })
+      localStorage.removeItem("user")
+      localStorage.removeItem("authToken")
+      window.location.href = "/admin/login"
+    } catch (error) {
+      console.error("Logout error:", error)
+    }
+  }
 
   // Helper functions
   const generateMonthlyGrowthData = (members: any[], renewals: any[]) => {
@@ -215,7 +255,7 @@ export default function AdminDashboard() {
       
       return {
         month,
-        members: memberCount + renewalCount + 400 // Base number to show growth
+        members: memberCount + renewalCount + 400
       }
     })
   }
@@ -230,7 +270,6 @@ export default function AdminDashboard() {
   const generateRecentActivity = (members: any[], blogs: any, events: any[], resources: any[]) => {
     const activities: { id: string; type: string; message: string; timestamp: any; color: string }[] = []
     
-    // Recent member applications
     const recentMembers = members?.slice(0, 2) || []
     recentMembers.forEach((member: any) => {
       activities.push({
@@ -242,7 +281,6 @@ export default function AdminDashboard() {
       })
     })
 
-    // Recent blog posts - handle both array and object with data property
     const blogData = blogs?.data || (Array.isArray(blogs) ? blogs : [])
     const recentBlogs = blogData.slice(0, 2) || []
     recentBlogs.forEach((blog: any) => {
@@ -255,7 +293,6 @@ export default function AdminDashboard() {
       })
     })
 
-    // Recent events
     const recentEvents = events?.slice(0, 1) || []
     recentEvents.forEach((event: any) => {
       activities.push({
@@ -272,7 +309,6 @@ export default function AdminDashboard() {
       .slice(0, 5)
   }
 
-  // Prepare membership distribution data for pie chart
   const membershipDistribution = [
     { name: "Full Membership", value: data.members.membershipTypes.full, color: "#8B5CF6" },
     { name: "Associate", value: data.members.membershipTypes.associate, color: "#06B6D4" },
@@ -292,21 +328,40 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-6">
+      {/* Header with User Greeting */}
       <div className="flex items-center justify-between">
-  <div>
-    <h1 className="text-3xl font-bold text-gray-900">Dashboard Overview</h1>
-    <p className="text-gray-600 mt-2">
-      Welcome back! Here's what's happening with AMWIK today.
-    </p>
-  </div>
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">
+            👋 Hi, {user?.name || "Admin"}!
+          </h1>
+          <p className="text-gray-600 mt-2">
+            Welcome back! Here's what's happening with AMWIK today.
+          </p>
+        </div>
 
-  {/* View Site Button */}
-  <Link href="/" passHref>
-    <Button className="bg-[var(--amwik-purple)] hover:bg-purple-700 text-white font-semibold">
-      View Site
-    </Button>
-  </Link>
-</div>
+        <div className="flex gap-3">
+          <Link href="/" passHref>
+            <Button className="bg-[var(--amwik-purple)] hover:bg-purple-700 text-white font-semibold">
+              View Site
+            </Button>
+          </Link>
+          <Button
+            onClick={handleLogout}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <LogOut className="h-4 w-4" />
+            Logout
+          </Button>
+        </div>
+      </div>
+
+      {/* Error Message */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+          {error}
+        </div>
+      )}
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -359,8 +414,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Membership Growth Chart */}
+      <div className="grid grid-cols-1 gap-6">
         <Card>
           <CardHeader>
             <CardTitle>Membership Growth</CardTitle>
@@ -378,36 +432,40 @@ export default function AdminDashboard() {
             </ResponsiveContainer>
           </CardContent>
         </Card>
-
-        {/* Event Attendance Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Events</CardTitle>
-            <CardDescription>Latest events from your database</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {data.events.recentAttendance.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={data.events.recentAttendance}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="event" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="attendance" fill="#06B6D4" />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="h-[300px] flex items-center justify-center text-gray-500">
-                <p>No recent events data available</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
       </div>
+
+      {/* Recent Activity */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Activity</CardTitle>
+          <CardDescription>Latest updates and actions across the platform</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {data.recentActivity.length > 0 ? (
+            <div className="space-y-4">
+              {data.recentActivity.map((activity) => (
+                <div key={activity.id} className="flex items-center space-x-4">
+                  <div className={`w-2 h-2 bg-${activity.color}-500 rounded-full`}></div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">{activity.message}</p>
+                    <p className="text-xs text-gray-500">
+                      {new Date(activity.timestamp).toLocaleString()}
+                    </p>
+                  </div>
+                  <Button variant="ghost" size="sm">
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-center py-4">No recent activity available</p>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Membership Distribution and Quick Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Membership Distribution */}
         <Card className="lg:col-span-1">
           <CardHeader>
             <CardTitle>Membership Distribution</CardTitle>
@@ -454,7 +512,6 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
 
-        {/* Quick Actions */}
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle>Quick Actions</CardTitle>
@@ -531,36 +588,6 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Recent Activity */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
-          <CardDescription>Latest updates and actions across the platform</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {data.recentActivity.length > 0 ? (
-            <div className="space-y-4">
-              {data.recentActivity.map((activity) => (
-                <div key={activity.id} className="flex items-center space-x-4">
-                  <div className={`w-2 h-2 bg-${activity.color}-500 rounded-full`}></div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">{activity.message}</p>
-                    <p className="text-xs text-gray-500">
-                      {new Date(activity.timestamp).toLocaleString()}
-                    </p>
-                  </div>
-                  <Button variant="ghost" size="sm">
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-gray-500 text-center py-4">No recent activity available</p>
-          )}
-        </CardContent>
-      </Card>
     </div>
   )
 }

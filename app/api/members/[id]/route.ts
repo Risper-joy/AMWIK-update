@@ -2,6 +2,74 @@ import { NextRequest, NextResponse } from 'next/server'
 import connectDB from '@/lib/mongodb'
 import Member from '@/models/Members'
 import mongoose from 'mongoose'
+import { MongoClient, ObjectId } from 'mongodb'
+
+const MONGODB_URI = process.env.MONGODB_URI!
+const DB_NAME = process.env.DB_NAME || 'amwik'
+
+let cachedClient: MongoClient | null = null
+
+async function connectToDatabase() {
+  if (cachedClient) {
+    return cachedClient
+  }
+
+  const client = new MongoClient(MONGODB_URI)
+  await client.connect()
+  cachedClient = client
+  return client
+}
+
+async function archiveToHistoricalMembers(member: any) {
+  try {
+    console.log('📚 Attempting to archive member to historical...')
+    
+    const client = await connectToDatabase()
+    const db = client.db(DB_NAME)
+    const collection = db.collection('historical_members')
+
+    // Extract year from application_date or createdAt
+    const dateToUse = member.application_date || member.createdAt
+    const year = new Date(dateToUse).getFullYear().toString()
+
+    // Format: name, organisation, email, phone
+    const historicalMember = {
+      name: `${member.first_name} ${member.last_name}`,
+      organisation: member.organization || member.organisation || 'N/A',
+      email: member.email,
+      phone: member.phone || 'N/A',
+      year: year,
+      uploadDate: new Date().toISOString(),
+      source: 'member_approval',
+      originalMemberId: member._id.toString(),
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }
+
+    // Check if already archived
+    const existing = await collection.findOne({ 
+      originalMemberId: member._id.toString() 
+    })
+
+    if (existing) {
+      // Update existing record
+      await collection.updateOne(
+        { originalMemberId: member._id.toString() },
+        { $set: historicalMember }
+      )
+      console.log('✅ Updated historical member:', member.email)
+    } else {
+      // Insert new record
+      await collection.insertOne(historicalMember)
+      console.log('✅ Archived new member to historical:', member.email)
+    }
+
+    return true
+  } catch (error) {
+    console.error('❌ Error archiving to historical members:', error)
+    return false
+  }
+}
 
 // PUT - Update member status
 export async function PUT(
@@ -9,6 +77,8 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    console.log('🔄 Updating member status...')
+    
     await connectDB()
     
     const { id } = params
@@ -36,7 +106,22 @@ export async function PUT(
       )
     }
     
-    return NextResponse.json(member)
+    console.log('✅ Member status updated to:', status)
+
+    // If approved, archive to historical members
+    if (status === 'Approved') {
+      console.log('📚 Member approved - archiving to historical...')
+      const archived = await archiveToHistoricalMembers(member)
+      
+      if (archived) {
+        console.log('✅ Member successfully archived to historical')
+      }
+    }
+    
+    return NextResponse.json({ 
+      ...member.toObject(),
+      archived: status === 'Approved'
+    })
   } catch (error: any) {
     console.error('Error updating member:', error)
     

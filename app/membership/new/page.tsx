@@ -31,7 +31,6 @@ export default function NewMembershipPage() {
       phone: "",
       dateOfBirth: "",
       nationality: "",
-      idNumber: "",
     },
     professionalInfo: {
       currentPosition: "",
@@ -42,24 +41,12 @@ export default function NewMembershipPage() {
       education: "",
     },
     membershipType: "",
-    interests: [] as string[],
     motivation: "",
-    references: {
-      referee1Name: "",
-      referee1Contact: "",
-      referee2Name: "",
-      referee2Contact: "",
-    },
     termsAccepted: false,
   })
 
   const handleInputChange = (section: keyof typeof formData, field: string, value: any) => {
-    if (section === 'interests') {
-      setFormData(prev => ({
-        ...prev,
-        interests: value
-      }))
-    } else if (section === 'membershipType' || section === 'motivation') {
+    if (section === 'membershipType' || section === 'motivation') {
       setFormData(prev => ({
         ...prev,
         [section]: value
@@ -80,15 +67,6 @@ export default function NewMembershipPage() {
     }
   }
 
-  const handleInterestChange = (interest: string, checked: boolean) => {
-    const currentInterests = formData.interests
-    if (checked) {
-      handleInputChange('interests', '', [...currentInterests, interest])
-    } else {
-      handleInputChange('interests', '', currentInterests.filter(i => i !== interest))
-    }
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
@@ -103,7 +81,6 @@ export default function NewMembershipPage() {
         phone: formData.personalInfo.phone,
         date_of_birth: formData.personalInfo.dateOfBirth || null,
         nationality: formData.personalInfo.nationality || null,
-        id_number: formData.personalInfo.idNumber || null,
         current_position: formData.professionalInfo.currentPosition,
         organization: formData.professionalInfo.organization,
         years_experience: formData.professionalInfo.yearsExperience || null,
@@ -111,12 +88,7 @@ export default function NewMembershipPage() {
         specialization: formData.professionalInfo.specialization || null,
         education: formData.professionalInfo.education || null,
         membership_type: formData.membershipType,
-        interests: formData.interests.length > 0 ? formData.interests : [],
         motivation: formData.motivation,
-        referee1_name: formData.references.referee1Name || null,
-        referee1_contact: formData.references.referee1Contact || null,
-        referee2_name: formData.references.referee2Name || null,
-        referee2_contact: formData.references.referee2Contact || null,
         status: 'Pending Review',
         terms_accepted: formData.termsAccepted,
         application_date: new Date(),
@@ -328,15 +300,6 @@ export default function NewMembershipPage() {
                         disabled={isSubmitting}
                       />
                     </div>
-                    <div className="md:col-span-2">
-                      <Label htmlFor="idNumber">National ID/Passport Number</Label>
-                      <Input
-                        id="idNumber"
-                        value={formData.personalInfo.idNumber}
-                        onChange={(e) => handleInputChange('personalInfo', 'idNumber', e.target.value)}
-                        disabled={isSubmitting}
-                      />
-                    </div>
                   </div>
                 </div>
 
@@ -444,36 +407,6 @@ export default function NewMembershipPage() {
                   </RadioGroup>
                 </div>
 
-                {/* Areas of Interest */}
-                <div>
-                  <h3 className="text-xl font-semibold mb-4 text-[var(--amwik-purple)]">Areas of Interest</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {[
-                      "Professional Development",
-                      "Networking Events",
-                      "Mentorship Programs",
-                      "Gender Advocacy",
-                      "Media Ethics",
-                      "Digital Skills",
-                      "Leadership Training",
-                      "Research & Publications",
-                      "Policy Advocacy",
-                    ].map((interest) => (
-                      <div key={interest} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={interest}
-                          checked={formData.interests.includes(interest)}
-                          onCheckedChange={(checked) => handleInterestChange(interest, checked as boolean)}
-                          disabled={isSubmitting}
-                        />
-                        <Label htmlFor={interest} className="text-sm">
-                          {interest}
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
                 {/* Motivation */}
                 <div>
                   <Label htmlFor="motivation">Why do you want to join AMWIK? *</Label>
@@ -486,50 +419,6 @@ export default function NewMembershipPage() {
                     required
                     disabled={isSubmitting}
                   />
-                </div>
-
-                {/* References */}
-                <div>
-                  <h3 className="text-xl font-semibold mb-4 text-[var(--amwik-purple)]">References</h3>
-                  <p className="text-gray-600 mb-4">Please provide two professional references</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="referee1Name">Reference 1 - Name</Label>
-                      <Input
-                        id="referee1Name"
-                        value={formData.references.referee1Name}
-                        onChange={(e) => handleInputChange('references', 'referee1Name', e.target.value)}
-                        disabled={isSubmitting}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="referee1Contact">Reference 1 - Contact</Label>
-                      <Input
-                        id="referee1Contact"
-                        value={formData.references.referee1Contact}
-                        onChange={(e) => handleInputChange('references', 'referee1Contact', e.target.value)}
-                        disabled={isSubmitting}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="referee2Name">Reference 2 - Name</Label>
-                      <Input
-                        id="referee2Name"
-                        value={formData.references.referee2Name}
-                        onChange={(e) => handleInputChange('references', 'referee2Name', e.target.value)}
-                        disabled={isSubmitting}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="referee2Contact">Reference 2 - Contact</Label>
-                      <Input
-                        id="referee2Contact"
-                        value={formData.references.referee2Contact}
-                        onChange={(e) => handleInputChange('references', 'referee2Contact', e.target.value)}
-                        disabled={isSubmitting}
-                      />
-                    </div>
-                  </div>
                 </div>
 
                 {/* Terms and Conditions */}

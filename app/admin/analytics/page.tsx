@@ -34,10 +34,10 @@ interface AnalyticsData {
     renewalRate: number
   }
   engagementStats: {
-    eventAttendance: number
+    // Removed eventAttendance
     blogViews: number
     resourceDownloads: number
-    newsletterOpens: number
+    // Removed newsletterOpens
   }
   geographicDistribution: {
     nairobi: number
@@ -55,7 +55,7 @@ interface AnalyticsData {
   trends: {
     memberGrowthTrend: number
     blogEngagementTrend: number
-    eventAttendanceTrend: number
+    // Removed eventAttendanceTrend
     renewalTrend: number
   }
 }
@@ -72,18 +72,18 @@ export default function AnalyticsPage() {
         setLoading(true)
         setError("")
 
-        const [membersRes, blogsRes, eventsRes, resourcesRes, renewalsRes] = await Promise.all([
+        // Removed the fetch for eventsRes
+        const [membersRes, blogsRes, resourcesRes, renewalsRes] = await Promise.all([
           fetch("/api/members"),
           fetch("/api/blogs"),
-          fetch("/api/events"),
           fetch("/api/resources"),
           fetch("/api/renewals").catch(() => ({ json: async () => [] })),
         ])
 
-        const [members, blogs, events, resources, renewals] = await Promise.all([
+        // Removed events from the destructuring
+        const [members, blogs, resources, renewals] = await Promise.all([
           membersRes.json(),
           blogsRes.json(),
-          eventsRes.json(),
           resourcesRes.json(),
           renewalsRes.json(),
         ])
@@ -114,9 +114,7 @@ export default function AnalyticsPage() {
         // Resources
         const resourceDownloads = resources?.reduce((sum: number, r: any) => sum + (r.downloadCount || 0), 0) || 0
 
-        // Events
-        const eventAttendance =
-          events?.reduce((sum: number) => sum + Math.floor(Math.random() * 100), 0) || 0
+        // Removed Event Attendance calculation
 
         // Geographic (adjust according to your schema)
         const geographicDistribution = {
@@ -142,7 +140,7 @@ export default function AnalyticsPage() {
         const memberGrowthTrend = ((newMembers / (totalMembers || 1)) * 100) || 0
         const renewalTrend = ((renewalsCount / (totalMembers || 1)) * 100) || 0
         const blogEngagementTrend = blogData.length > 0 ? 15.3 : 0
-        const eventAttendanceTrend = events.length > 0 ? 5.1 : 0
+        // Removed eventAttendanceTrend calculation
 
         setData({
           membershipStats: {
@@ -155,17 +153,17 @@ export default function AnalyticsPage() {
             renewalRate: renewalTrend,
           },
           engagementStats: {
-            eventAttendance,
+            // Removed eventAttendance
             blogViews,
             resourceDownloads,
-            newsletterOpens: 65,
+            // Removed newsletterOpens
           },
           geographicDistribution,
           ageDistribution,
           trends: {
             memberGrowthTrend,
             blogEngagementTrend,
-            eventAttendanceTrend,
+            // Removed eventAttendanceTrend
             renewalTrend,
           },
         })
@@ -245,12 +243,9 @@ export default function AnalyticsPage() {
           </Card>
         </div>
 
-        {/* Engagement Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card>
-            <CardHeader><CardTitle>Event Attendance</CardTitle></CardHeader>
-            <CardContent className="text-2xl font-bold">{data.engagementStats.eventAttendance}</CardContent>
-          </Card>
+        {/* Engagement Stats - Now 2 Cards instead of 4 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+          {/* Removed Event Attendance Card */}
           <Card>
             <CardHeader><CardTitle>Blog Views</CardTitle></CardHeader>
             <CardContent className="text-2xl font-bold">{data.engagementStats.blogViews}</CardContent>
@@ -259,10 +254,7 @@ export default function AnalyticsPage() {
             <CardHeader><CardTitle>Resource Downloads</CardTitle></CardHeader>
             <CardContent className="text-2xl font-bold">{data.engagementStats.resourceDownloads}</CardContent>
           </Card>
-          <Card>
-            <CardHeader><CardTitle>Newsletter Opens</CardTitle></CardHeader>
-            <CardContent className="text-2xl font-bold">{data.engagementStats.newsletterOpens}</CardContent>
-          </Card>
+          {/* Removed Newsletter Opens Card */}
         </div>
 
         {/* Geographic Distribution */}
@@ -291,10 +283,10 @@ export default function AnalyticsPage() {
           </CardContent>
         </Card>
 
-        {/* Trends */}
+        {/* Trends - Now 3 trends instead of 4 */}
         <Card>
           <CardHeader><CardTitle>Trends</CardTitle></CardHeader>
-          <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <CardContent className="grid grid-cols-2 md:grid-cols-3 gap-6">
             <div>
               <p className="text-sm text-gray-600">Member Growth</p>
               <p className={`text-lg font-bold ${getTrendColor(data.trends.memberGrowthTrend)}`}>
@@ -313,12 +305,7 @@ export default function AnalyticsPage() {
                 {formatTrend(data.trends.blogEngagementTrend)}
               </p>
             </div>
-            <div>
-              <p className="text-sm text-gray-600">Event Attendance</p>
-              <p className={`text-lg font-bold ${getTrendColor(data.trends.eventAttendanceTrend)}`}>
-                {formatTrend(data.trends.eventAttendanceTrend)}
-              </p>
-            </div>
+            {/* Removed Event Attendance Trend */}
           </CardContent>
         </Card>
       </div>
