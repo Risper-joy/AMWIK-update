@@ -117,14 +117,7 @@ export default function LoginPage() {
           {loading ? "Logging in..." : "Login"}
         </Button>
 
-        <Button
-          type="button"
-          onClick={handleLogout}
-          className="w-full mt-3 bg-red-600 hover:bg-red-700 text-white font-semibold"
-          disabled={loading}
-        >
-          {loading ? "Logging out..." : "Logout"}
-        </Button>
+        
 
         <p className="text-center text-sm text-gray-600 mt-4">
           Don't have an account? <a href="/admin/signup" className="text-purple-600 hover:underline">Sign up here</a>
