@@ -17,46 +17,51 @@ export default function LoginPage() {
     setError("")
     setSuccess("")
 
-    console.log("🚀 Starting login process...")
-
     try {
-      console.log("📤 Sending login request with:", { email })
-
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       })
 
-      console.log("📥 Response status:", res.status)
-
-      const data = await res.json().catch(() => ({}))
-      console.log("📥 Response data:", data)
+      const data = await res.json()
 
       if (res.ok && data.token) {
-        console.log("✅ Login successful, token received")
-        console.log("📥 Response headers:", res.headers)
-        
-        // Store token in localStorage as backup
         localStorage.setItem("authToken", data.token)
         localStorage.setItem("user", JSON.stringify(data.user))
-        console.log("✅ Token stored in localStorage")
-
-        setSuccess("✅ Login successful! Redirecting...")
-        
-        console.log("🔄 Redirecting to /admin...")
-        
-        // Simple redirect
-        window.location.href = "/admin"
-        
+        setSuccess("Login successful! Redirecting...")
+        setTimeout(() => {
+          router.push("/admin")
+        }, 1000)
       } else {
-        const errorMsg = data.message || `Error ${res.status}`
-        console.error("❌ Login failed:", errorMsg)
-        setError(errorMsg)
+        setError(data.message || "Invalid login credentials")
       }
-    } catch (err: any) {
-      console.error("❌ Network/Fetch error:", err)
+    } catch (err) {
+      console.error(err)
       setError("Network error. Please try again.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleLogout = async () => {
+    try {
+      setLoading(true)
+      const res = await fetch("/api/auth/logout", { method: "POST" })
+
+      if (res.ok) {
+        localStorage.removeItem("authToken")
+        localStorage.removeItem("user")
+        setSuccess("Logged out successfully!")
+        setTimeout(() => {
+          router.push("/admin/login")
+        }, 1000)
+      } else {
+        setError("Logout failed. Please try again.")
+      }
+    } catch (err) {
+      console.error("Logout error:", err)
+      setError("Network error during logout.")
     } finally {
       setLoading(false)
     }
@@ -67,52 +72,42 @@ export default function LoginPage() {
       <form onSubmit={handleLogin} className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
         <h2 className="text-2xl font-semibold mb-4 text-center">Admin Login</h2>
 
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
-            {error}
-          </div>
-        )}
-
-        {success && (
-          <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded mb-4">
-            {success}
-          </div>
-        )}
+        {error && <p className="text-red-600 text-sm mb-3">{error}</p>}
+        {success && <p className="text-green-600 text-sm mb-3">{success}</p>}
 
         <div className="mb-4">
-          <label className="block text-gray-700 mb-2">Email</label>
+          <label className="block mb-2 text-gray-700">Email</label>
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full border rounded p-2 focus:outline-none focus:border-purple-500"
+            className="w-full border rounded p-2"
             placeholder="Enter email"
             required
-            disabled={loading}
           />
         </div>
 
         <div className="mb-6">
-          <label className="block text-gray-700 mb-2">Password</label>
+          <label className="block mb-2 text-gray-700">Password</label>
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full border rounded p-2 focus:outline-none focus:border-purple-500"
+            className="w-full border rounded p-2"
             placeholder="Enter password"
             required
-            disabled={loading}
           />
         </div>
 
         <Button
           type="submit"
-          className="w-full bg-[var(--amwik-purple)] hover:bg-purple-700 text-white font-semibold"
+          className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold"
           disabled={loading}
         >
           {loading ? "Logging in..." : "Login"}
         </Button>
 
+       
         <p className="text-center text-sm text-gray-600 mt-4">
           Don't have an account? <a href="/admin/signup" className="text-purple-600 hover:underline">Sign up here</a>
         </p>
