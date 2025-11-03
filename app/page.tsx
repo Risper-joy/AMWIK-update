@@ -338,9 +338,7 @@ export default function HomePage() {
                       </div>
                     )}
 
-                    <Button className="w-full bg-[var(--amwik-purple)] hover:bg-purple-700">
-                      Register Now
-                    </Button>
+                    
                   </div>
                 </CardContent>
               </Card>
