@@ -25,21 +25,29 @@ export default function LoginPage() {
       })
 
       const data = await res.json()
+      console.log("Login response:", data)
+      console.log("Response status:", res.ok)
 
       if (res.ok && data.token) {
+        console.log("Token received:", !!data.token)
         localStorage.setItem("authToken", data.token)
         localStorage.setItem("user", JSON.stringify(data.user))
+        console.log("LocalStorage set, preparing redirect...")
+        
         setSuccess("Login successful! Redirecting...")
+        
+        // Force a hard redirect instead of router.push
         setTimeout(() => {
-          router.push("/admin")
-        }, 1000)
+          console.log("Executing redirect to /admin")
+          window.location.href = "/admin"
+        }, 1500)
       } else {
         setError(data.message || "Invalid login credentials")
+        setLoading(false)
       }
     } catch (err) {
-      console.error(err)
+      console.error("Login error:", err)
       setError("Network error. Please try again.")
-    } finally {
       setLoading(false)
     }
   }
@@ -54,15 +62,15 @@ export default function LoginPage() {
         localStorage.removeItem("user")
         setSuccess("Logged out successfully!")
         setTimeout(() => {
-          router.push("/admin/login")
+          window.location.href = "/admin/login"
         }, 1000)
       } else {
         setError("Logout failed. Please try again.")
+        setLoading(false)
       }
     } catch (err) {
       console.error("Logout error:", err)
       setError("Network error during logout.")
-    } finally {
       setLoading(false)
     }
   }
@@ -72,8 +80,8 @@ export default function LoginPage() {
       <form onSubmit={handleLogin} className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
         <h2 className="text-2xl font-semibold mb-4 text-center">Admin Login</h2>
 
-        {error && <p className="text-red-600 text-sm mb-3">{error}</p>}
-        {success && <p className="text-green-600 text-sm mb-3">{success}</p>}
+        {error && <p className="text-red-600 text-sm mb-3 p-2 bg-red-50 rounded">{error}</p>}
+        {success && <p className="text-green-600 text-sm mb-3 p-2 bg-green-50 rounded">{success}</p>}
 
         <div className="mb-4">
           <label className="block mb-2 text-gray-700">Email</label>
@@ -84,6 +92,7 @@ export default function LoginPage() {
             className="w-full border rounded p-2"
             placeholder="Enter email"
             required
+            disabled={loading}
           />
         </div>
 
@@ -96,6 +105,7 @@ export default function LoginPage() {
             className="w-full border rounded p-2"
             placeholder="Enter password"
             required
+            disabled={loading}
           />
         </div>
 
@@ -107,7 +117,15 @@ export default function LoginPage() {
           {loading ? "Logging in..." : "Login"}
         </Button>
 
-       
+        <Button
+          type="button"
+          onClick={handleLogout}
+          className="w-full mt-3 bg-red-600 hover:bg-red-700 text-white font-semibold"
+          disabled={loading}
+        >
+          {loading ? "Logging out..." : "Logout"}
+        </Button>
+
         <p className="text-center text-sm text-gray-600 mt-4">
           Don't have an account? <a href="/admin/signup" className="text-purple-600 hover:underline">Sign up here</a>
         </p>
