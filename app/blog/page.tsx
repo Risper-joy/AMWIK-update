@@ -14,12 +14,14 @@ import Link from "next/link"
 
 const categories = [
   "All Categories",
-  "Digital Media",
-  "Investigative Journalism",
-  "Media Ethics",
-  "Community Media",
-  "Entrepreneurship",
-  "Environmental Journalism",
+  "digital-media",
+  "investigative-journalism",
+  "media-ethics",
+  "community-media",
+  "entrepreneurship",
+  "leadership",
+  "training",
+  "advocacy",
 ]
 
 export default function BlogPage() {
@@ -30,17 +32,32 @@ export default function BlogPage() {
   const [sortBy, setSortBy] = useState("newest")
   const [loading, setLoading] = useState(true)
 
+  // Fetch blog posts on component mount
   useEffect(() => {
     const fetchPosts = async () => {
       try {
         const res = await fetch("/api/blogs")
         const result = await res.json()
-        if (result.success) {
-          setBlogPosts(result.data || [])
-          setFilteredPosts(result.data || [])
+        console.log("📝 Fetched blog posts:", result)
+        
+        // Extract posts correctly from the API response
+        let posts = []
+        if (result.success && result.data) {
+          posts = Array.isArray(result.data) ? result.data : []
+        } else if (Array.isArray(result)) {
+          posts = result
         }
+
+        // Filter for published posts only
+        const publishedPosts = posts.filter((post: any) => post.status === "Published")
+        
+        console.log("📊 Published posts:", publishedPosts.length)
+        setBlogPosts(publishedPosts)
+        setFilteredPosts(publishedPosts)
       } catch (err) {
         console.error("Error fetching blogs:", err)
+        setBlogPosts([])
+        setFilteredPosts([])
       } finally {
         setLoading(false)
       }
@@ -48,33 +65,47 @@ export default function BlogPage() {
     fetchPosts()
   }, [])
 
+  // Apply filters and sorting
   useEffect(() => {
     let filtered = [...blogPosts]
 
-    if (searchTerm) {
+    // Search filter
+    if (searchTerm.trim()) {
+      const lowerSearchTerm = searchTerm.toLowerCase()
       filtered = filtered.filter(
         (post) =>
-          post.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          post.content?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          post.author?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (post.tags || []).some((tag: string) =>
-            tag.toLowerCase().includes(searchTerm.toLowerCase())
-          )
+          (post.title && post.title.toLowerCase().includes(lowerSearchTerm)) ||
+          (post.content && post.content.toLowerCase().includes(lowerSearchTerm)) ||
+          (post.author && post.author.toLowerCase().includes(lowerSearchTerm)) ||
+          (post.excerpt && post.excerpt.toLowerCase().includes(lowerSearchTerm)) ||
+          (post.tags && Array.isArray(post.tags) && 
+            post.tags.some((tag: string) => tag.toLowerCase().includes(lowerSearchTerm)))
       )
     }
 
+    // Category filter
     if (selectedCategory !== "All Categories") {
       filtered = filtered.filter((post) => post.category === selectedCategory)
     }
 
+    // Sorting
     if (sortBy === "newest") {
-      filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      filtered.sort((a, b) => {
+        const dateA = new Date(a.publishDate || a.createdAt).getTime()
+        const dateB = new Date(b.publishDate || b.createdAt).getTime()
+        return dateB - dateA
+      })
     } else if (sortBy === "oldest") {
-      filtered.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+      filtered.sort((a, b) => {
+        const dateA = new Date(a.publishDate || a.createdAt).getTime()
+        const dateB = new Date(b.publishDate || b.createdAt).getTime()
+        return dateA - dateB
+      })
     } else if (sortBy === "popular") {
       filtered.sort((a, b) => (b.viewCount || 0) - (a.viewCount || 0))
     }
 
+    console.log(`📊 Filtered posts: ${filtered.length} (category: ${selectedCategory}, search: "${searchTerm}", sort: ${sortBy})`)
     setFilteredPosts(filtered)
   }, [searchTerm, selectedCategory, sortBy, blogPosts])
 
@@ -98,30 +129,38 @@ export default function BlogPage() {
     }
   }
 
+  // Format category for display
+  const formatCategoryDisplay = (category: string) => {
+    if (category === "All Categories") return category
+    return category
+      .split("-")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ")
+  }
+
   return (
     <div className="min-h-screen">
       <Navigation />
 
       {/* Hero Section */}
-<section className="relative py-16">
-  <div
-    className="absolute inset-0 bg-cover bg-center z-0"
-    style={{
-      backgroundImage:
-        "url('https://images.unsplash.com/photo-1517048676732-d65bc937f952?q=80&w=2070')",
-    }}
-  ></div>
-  <div className="absolute inset-0 bg-[var(--amwik-purple)] opacity-80 z-10"></div>
-  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-20 text-white">
-    <h1 className="text-5xl font-bold mb-4 text-white">Blog</h1>
-    <p className="text-xl max-w-3xl mx-auto text-white">
-      Insights, stories, and perspectives from women in media. Stay updated
-      with the latest trends, challenges, and opportunities in journalism and
-      media.
-    </p>
-  </div>
-</section>
-
+      <section className="relative py-16">
+        <div
+          className="absolute inset-0 bg-cover bg-center z-0"
+          style={{
+            backgroundImage:
+              "url('https://images.unsplash.com/photo-1517048676732-d65bc937f952?q=80&w=2070')",
+          }}
+        ></div>
+        <div className="absolute inset-0 bg-[var(--amwik-purple)] opacity-80 z-10"></div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-20 text-white">
+          <h1 className="text-5xl font-bold mb-4 text-white">Blog</h1>
+          <p className="text-xl max-w-3xl mx-auto text-white">
+            Insights, stories, and perspectives from women in media. Stay updated
+            with the latest trends, challenges, and opportunities in journalism and
+            media.
+          </p>
+        </div>
+      </section>
 
       {/* Search + Filters */}
       <section className="py-8 bg-gray-50 border-b">
@@ -137,7 +176,7 @@ export default function BlogPage() {
               />
             </div>
 
-            <div className="flex gap-4 items-center">
+            <div className="flex gap-4 items-center flex-wrap">
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                 <SelectTrigger className="w-48">
                   <SelectValue placeholder="Select category" />
@@ -145,7 +184,7 @@ export default function BlogPage() {
                 <SelectContent>
                   {categories.map((category) => (
                     <SelectItem key={category} value={category}>
-                      {category}
+                      {formatCategoryDisplay(category)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -185,30 +224,32 @@ export default function BlogPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {filteredPosts.map((post) => (
-                <Card key={post._id}>
+                <Card key={post._id} className="hover:shadow-lg transition-shadow">
                   <div className="relative">
                     <Image
                       src={post.featuredImage || "/placeholder.svg"}
                       alt={post.title}
                       width={400}
                       height={200}
-                      className="w-full h-48 object-cover"
+                      className="w-full h-48 object-cover rounded-t-lg"
                     />
                     {post.category && (
-                      <Badge className="absolute top-4 left-4 bg-[var(--amwik-purple)]">{post.category}</Badge>
+                      <Badge className="absolute top-4 left-4 bg-[var(--amwik-purple)]">
+                        {formatCategoryDisplay(post.category)}
+                      </Badge>
                     )}
                   </div>
                   <CardHeader>
-                    <CardTitle className="text-lg hover:text-[var(--amwik-purple)] transition-colors">
+                    <CardTitle className="text-lg hover:text-[var(--amwik-purple)] transition-colors line-clamp-2">
                       <Link href={`/blog/${post.slug || post._id}`}>{post.title}</Link>
                     </CardTitle>
-                    <CardDescription className="text-sm">{post.excerpt}</CardDescription>
+                    <CardDescription className="text-sm line-clamp-2">{post.excerpt}</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
                       <div className="flex items-center space-x-2">
                         <User className="h-4 w-4" />
-                        <span>{post.author}</span>
+                        <span className="truncate">{post.author}</span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Calendar className="h-4 w-4" />
@@ -220,31 +261,36 @@ export default function BlogPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between mb-4">
                       <span className="text-sm text-gray-500">{post.readTime || "5 min read"}</span>
-                      <div className="flex items-center space-x-2">
-                        <Button variant="ghost" size="sm" onClick={() => sharePost(post, "facebook")} className="p-1 h-8 w-8">
+                      <div className="flex items-center space-x-1">
+                        <Button variant="ghost" size="sm" onClick={() => sharePost(post, "facebook")} className="p-1 h-8 w-8 hover:bg-gray-100">
                           <Facebook className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => sharePost(post, "twitter")} className="p-1 h-8 w-8">
+                        <Button variant="ghost" size="sm" onClick={() => sharePost(post, "twitter")} className="p-1 h-8 w-8 hover:bg-gray-100">
                           <Twitter className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => sharePost(post, "linkedin")} className="p-1 h-8 w-8">
+                        <Button variant="ghost" size="sm" onClick={() => sharePost(post, "linkedin")} className="p-1 h-8 w-8 hover:bg-gray-100">
                           <Linkedin className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => sharePost(post, "copy")} className="p-1 h-8 w-8">
+                        <Button variant="ghost" size="sm" onClick={() => sharePost(post, "copy")} className="p-1 h-8 w-8 hover:bg-gray-100">
                           <Link2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
 
-                    {post.tags && (
+                    {post.tags && Array.isArray(post.tags) && post.tags.length > 0 && (
                       <div className="flex flex-wrap gap-2 mt-4">
-                        {post.tags.map((tag: string) => (
+                        {post.tags.slice(0, 3).map((tag: string) => (
                           <Badge key={tag} variant="outline" className="text-xs">
                             {tag}
                           </Badge>
                         ))}
+                        {post.tags.length > 3 && (
+                          <Badge variant="outline" className="text-xs">
+                            +{post.tags.length - 3}
+                          </Badge>
+                        )}
                       </div>
                     )}
                   </CardContent>
@@ -257,7 +303,7 @@ export default function BlogPage() {
 
       {/* Newsletter */}
       <section className="py-16 bg-gray-50">
-        <div className="max-w-4xl mx-auto text-center">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl font-bold text-gray-900 mb-4">Stay Updated</h2>
           <p className="text-xl text-gray-600 mb-8">
             Subscribe to our newsletter and never miss the latest insights from women in media.

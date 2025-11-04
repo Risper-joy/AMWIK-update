@@ -17,13 +17,21 @@ export async function GET(request: NextRequest) {
     const featured = searchParams.get('featured');
     const search = searchParams.get('search');
     
-    // Build query
+    // Build query - ensure we filter correctly
     const query: any = {};
     
-    if (status) query.status = status;
-    if (category) query.category = category;
-    if (author) query.author = author;
-    if (featured === 'true') query.featured = true;
+    if (status && status !== 'All') {
+      query.status = status; // Exact match for status
+    }
+    if (category && category !== 'All') {
+      query.category = category;
+    }
+    if (author) {
+      query.author = { $regex: author, $options: 'i' };
+    }
+    if (featured === 'true') {
+      query.featured = true;
+    }
     if (search) {
       query.$or = [
         { title: { $regex: search, $options: 'i' } },
@@ -42,6 +50,8 @@ export async function GET(request: NextRequest) {
         .lean(),
       BlogPost.countDocuments(query)
     ]);
+
+    console.log('📊 Blog Query:', { query, totalFound: total, postsReturned: posts.length });
     
     return NextResponse.json({
       success: true,
@@ -72,14 +82,34 @@ export async function POST(request: NextRequest) {
     
     const data = await request.json();
     
+    // Ensure status is one of the valid values
+    if (!['Published', 'Draft', 'Scheduled'].includes(data.status)) {
+      data.status = 'Draft'; // Default to Draft
+    }
+    
     // Process tags if they're a comma-separated string
     if (typeof data.tags === 'string') {
       data.tags = data.tags.split(',').map((tag: string) => tag.trim()).filter(Boolean);
     }
     
+    // Ensure other required fields
+    if (!data.createdAt) {
+      data.createdAt = new Date();
+    }
+    
+    if (!data.updatedAt) {
+      data.updatedAt = new Date();
+    }
+    
     // Create new blog post
     const blogPost = new BlogPost(data);
     await blogPost.save();
+    
+    console.log('✅ Blog post created:', { 
+      id: blogPost._id, 
+      title: blogPost.title, 
+      status: blogPost.status 
+    });
     
     return NextResponse.json({
       success: true,
@@ -107,7 +137,8 @@ export async function POST(request: NextRequest) {
     
     return NextResponse.json({
       success: false,
-      error: 'Failed to create blog post'
+      error: 'Failed to create blog post',
+      details: error.message
     }, { status: 500 });
   }
 }

@@ -10,7 +10,7 @@ export interface IBlogPost extends Document {
   tags: string[];
   author: string;
   featuredImage?: string;
-  status: 'draft' | 'published' | 'scheduled';
+  status: 'Draft' | 'Published' | 'Scheduled';
   publishDate?: Date;
   seoTitle?: string;
   seoDescription?: string;
@@ -86,14 +86,14 @@ const BlogPostSchema = new Schema<IBlogPost>({
   },
   status: {
     type: String,
-    enum: ['draft', 'published', 'scheduled'],
-    default: 'draft'
+    enum: ['Draft', 'Published', 'Scheduled'],
+    default: 'Draft'
   },
   publishDate: {
     type: Date,
     validate: {
       validator: function(this: IBlogPost, v: Date) {
-        if (this.status === 'scheduled') {
+        if (this.status === 'Scheduled') {
           return v && v > new Date();
         }
         return true;
@@ -104,12 +104,12 @@ const BlogPostSchema = new Schema<IBlogPost>({
   seoTitle: {
     type: String,
     trim: true,
-    maxlength: [60, 'SEO title cannot exceed 60 characters']
+    maxlength: [200, 'SEO title cannot exceed 200 characters']
   },
   seoDescription: {
     type: String,
     trim: true,
-    maxlength: [160, 'SEO description cannot exceed 160 characters']
+    maxlength: [500, 'SEO description cannot exceed 500 characters']
   },
   allowComments: {
     type: Boolean,
@@ -162,7 +162,7 @@ BlogPostSchema.pre('save', function(next) {
   }
   
   // Set publish date for published posts if not set
-  if (this.status === 'published' && !this.publishDate) {
+  if (this.status === 'Published' && !this.publishDate) {
     this.publishDate = new Date();
   }
   
@@ -172,7 +172,7 @@ BlogPostSchema.pre('save', function(next) {
 // Static method to get published posts
 BlogPostSchema.statics.getPublished = function() {
   return this.find({ 
-    status: 'published',
+    status: 'Published',
     $or: [
       { publishDate: { $lte: new Date() } },
       { publishDate: null }

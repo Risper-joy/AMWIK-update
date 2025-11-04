@@ -205,7 +205,7 @@ export default function NewBlogPage() {
     tags: "",
     author: "",
     featuredImage: "",
-    status: "draft",
+    status: "Draft",
     publishDate: "",
     seoTitle: "",
     seoDescription: "",
@@ -318,17 +318,21 @@ export default function NewBlogPage() {
     if (!formData.author) {
       errors.push("Author is required")
     }
+
+    if (!formData.category) {
+      errors.push("Category is required")
+    }
     
-    if (formData.status === "scheduled" && !formData.publishDate) {
+    if (formData.status === "Scheduled" && !formData.publishDate) {
       errors.push("Publish date is required for scheduled posts")
     }
     
-    if (formData.seoTitle && formData.seoTitle.length > 60) {
-      errors.push("SEO title must be 60 characters or less")
+    if (formData.seoTitle && formData.seoTitle.length > 200) {
+      errors.push("SEO title must be 200 characters or less")
     }
     
-    if (formData.seoDescription && formData.seoDescription.length > 160) {
-      errors.push("SEO description must be 160 characters or less")
+    if (formData.seoDescription && formData.seoDescription.length > 500) {
+      errors.push("SEO description must be 500 characters or less")
     }
     
     return errors
@@ -348,13 +352,32 @@ export default function NewBlogPage() {
     setIsLoading(true)
     
     try {
+      // Parse tags from comma-separated string
+      const tagsArray = formData.tags
+        .split(",")
+        .map(tag => tag.trim())
+        .filter(tag => tag.length > 0)
+
       const dataToSubmit = {
-        ...formData,
+        title: formData.title.trim(),
+        slug: formData.slug.trim(),
+        excerpt: formData.excerpt.trim(),
+        content: formData.content.trim(),
+        category: formData.category,
+        tags: tagsArray,
+        author: formData.author,
+        featuredImage: formData.featuredImage,
         status,
-        publishDate: status === "scheduled" ? formData.publishDate : 
-                     status === "published" ? new Date().toISOString() : 
-                     formData.publishDate
+        publishDate: status === "Scheduled" ? formData.publishDate : 
+                     status === "Published" ? new Date().toISOString() : 
+                     formData.publishDate,
+        seoTitle: formData.seoTitle,
+        seoDescription: formData.seoDescription,
+        allowComments: formData.allowComments,
+        featured: formData.featured,
       }
+
+      console.log("📝 Submitting blog post:", dataToSubmit)
 
       const response = await fetch('/api/blogs', {
         method: 'POST',
@@ -369,11 +392,11 @@ export default function NewBlogPage() {
       if (result.success) {
         toast({
           title: "Success",
-          description: `Blog post ${status === 'published' ? 'published' : 'saved'} successfully!`,
+          description: `Blog post ${status === 'Published' ? 'published' : 'saved'} successfully!`,
         })
         router.push('/admin/blogs')
       } else {
-        throw new Error(result.error || 'Failed to save blog post')
+        throw new Error(result.error || result.message || 'Failed to save blog post')
       }
     } catch (error: any) {
       console.error('Error saving blog post:', error)
@@ -387,8 +410,8 @@ export default function NewBlogPage() {
     }
   }
 
-  const handleSaveDraft = () => saveBlogPost('draft')
-  const handlePublish = () => saveBlogPost('published')
+  const handleSaveDraft = () => saveBlogPost('Draft')
+  const handlePublish = () => saveBlogPost('Published')
 
   return (
     <>
@@ -580,9 +603,9 @@ export default function NewBlogPage() {
                     onChange={(e) => handleInputChange("seoTitle", e.target.value)}
                     placeholder="SEO optimized title"
                     className="mt-1"
-                    maxLength={60}
+                    maxLength={200}
                   />
-                  <p className="text-xs text-gray-500 mt-1">{formData.seoTitle.length}/60 characters</p>
+                  <p className="text-xs text-gray-500 mt-1">{formData.seoTitle.length}/200 characters</p>
                 </div>
 
                 <div>
@@ -594,9 +617,9 @@ export default function NewBlogPage() {
                     placeholder="SEO meta description"
                     rows={3}
                     className="mt-1"
-                    maxLength={160}
+                    maxLength={500}
                   />
-                  <p className="text-xs text-gray-500 mt-1">{formData.seoDescription.length}/160 characters</p>
+                  <p className="text-xs text-gray-500 mt-1">{formData.seoDescription.length}/500 characters</p>
                 </div>
               </CardContent>
             </Card>
@@ -617,14 +640,14 @@ export default function NewBlogPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="draft">Draft</SelectItem>
-                      <SelectItem value="published">Published</SelectItem>
-                      <SelectItem value="scheduled">Scheduled</SelectItem>
+                      <SelectItem value="Draft">Draft</SelectItem>
+                      <SelectItem value="Published">Published</SelectItem>
+                      <SelectItem value="Scheduled">Scheduled</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
-                {formData.status === "scheduled" && (
+                {formData.status === "Scheduled" && (
                   <div>
                     <Label htmlFor="publishDate" className="text-sm font-medium">Publish Date *</Label>
                     <Input
@@ -669,7 +692,7 @@ export default function NewBlogPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label htmlFor="category" className="text-sm font-medium">Category</Label>
+                  <Label htmlFor="category" className="text-sm font-medium">Category *</Label>
                   <Select value={formData.category} onValueChange={(value) => handleInputChange("category", value)}>
                     <SelectTrigger className="mt-1">
                       <SelectValue placeholder="Select category" />
@@ -701,7 +724,7 @@ export default function NewBlogPage() {
               </CardContent>
             </Card>
 
-            {/* Enhanced Featured Image Upload */}
+            {/* Featured Image */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg font-semibold">Featured Image</CardTitle>

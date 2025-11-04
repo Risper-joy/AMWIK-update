@@ -103,27 +103,27 @@ export default function AdminDashboard() {
         const [membersRes, blogsRes, eventsRes, resourcesRes, renewalsRes] = await Promise.all([
           fetch("/api/members").catch(e => {
             console.error("❌ Error fetching members:", e)
-            return { ok: false, json: async () => [] }
+            return { ok: false, json: async () => ({ data: [] }) }
           }),
           fetch("/api/blogs").catch(e => {
             console.error("❌ Error fetching blogs:", e)
-            return { ok: false, json: async () => [] }
+            return { ok: false, json: async () => ({ data: [] }) }
           }),
           fetch("/api/events").catch(e => {
             console.error("❌ Error fetching events:", e)
-            return { ok: false, json: async () => [] }
+            return { ok: false, json: async () => ({ data: [] }) }
           }),
           fetch("/api/resources").catch(e => {
             console.error("❌ Error fetching resources:", e)
-            return { ok: false, json: async () => [] }
+            return { ok: false, json: async () => ({ data: [] }) }
           }),
           fetch("/api/renewals").catch(e => {
             console.error("❌ Error fetching renewals:", e)
-            return { ok: false, json: async () => [] }
+            return { ok: false, json: async () => ({ data: [] }) }
           })
         ])
 
-        const [members, blogs, events, resources, renewals] = await Promise.all([
+        const [membersData, blogsData, eventsData, resourcesData, renewalsData] = await Promise.all([
           membersRes.json(),
           blogsRes.json(),
           eventsRes.json(),
@@ -131,7 +131,19 @@ export default function AdminDashboard() {
           renewalsRes.json()
         ])
 
-        console.log("✅ Data fetched:", { members: members?.length, blogs: blogs?.length, events: events?.length })
+        // Extract arrays correctly
+        const members = membersData?.data || (Array.isArray(membersData) ? membersData : [])
+        const blogs = blogsData?.data || (Array.isArray(blogsData) ? blogsData : [])
+        const events = eventsData?.data || (Array.isArray(eventsData) ? eventsData : [])
+        const resources = resourcesData?.data || (Array.isArray(resourcesData) ? resourcesData : [])
+        const renewals = renewalsData?.data || (Array.isArray(renewalsData) ? renewalsData : [])
+
+        console.log("✅ Data fetched:", { 
+          members: members.length, 
+          blogs: blogs.length, 
+          events: events.length,
+          resources: resources.length 
+        })
 
         // Process members data
         const totalMembers = (members?.length || 0) + (renewals?.length || 0)
@@ -155,11 +167,31 @@ export default function AdminDashboard() {
         // Generate monthly growth data
         const monthlyData = generateMonthlyGrowthData(members || [], renewals || [])
 
-        // Process blogs data
-        const blogData = blogs?.data || (Array.isArray(blogs) ? blogs : [])
-        const publishedBlogs = blogData.filter((b: any) => b.status === "Published").length || 0
-        const draftBlogs = blogData.filter((b: any) => b.status === "Draft").length || 0
-        const totalViews = blogData.reduce((sum: number, b: any) => sum + (b.viewCount || 0), 0) || 0
+        // Process blogs data - FIXED
+        const publishedBlogs = blogs.filter((b: any) => b.status === "Published").length || 0
+        const draftBlogs = blogs.filter((b: any) => b.status === "Draft").length || 0
+        const scheduledBlogs = blogs.filter((b: any) => b.status === "Scheduled").length || 0
+        const totalViews = blogs.reduce((sum: number, b: any) => sum + (b.viewCount || 0), 0) || 0
+
+        console.log("📝 Blog breakdown:", { 
+          total: blogs.length,
+          published: publishedBlogs, 
+          draft: draftBlogs, 
+          scheduled: scheduledBlogs
+        })
+
+        // Process resources data
+        const publishedResources = resources.filter((r: any) => r.status === "Published").length || 0
+        const totalDownloads = resources.reduce((sum: number, r: any) => sum + (r.downloadCount || 0), 0) || 0
+
+        // Calculate total published content (blogs + resources)
+        const totalPublishedContent = publishedBlogs + publishedResources
+
+        console.log("📊 Published content total:", {
+          publishedBlogs,
+          publishedResources,
+          total: totalPublishedContent
+        })
 
         // Process events data
         const totalEvents = events?.length || 0
@@ -172,11 +204,6 @@ export default function AdminDashboard() {
           event: event.title.substring(0, 15) + (event.title.length > 15 ? '...' : ''),
           attendance: Math.floor(Math.random() * 300) + 50
         })) || []
-
-        // Process resources data
-        const totalResources = resources?.length || 0
-        const publishedResources = resources?.filter((r: any) => r.status === "Published").length || 0
-        const totalDownloads = resources?.reduce((sum: number, r: any) => sum + (r.downloadCount || 0), 0) || 0
 
         // Generate recent activity
         const recentActivity = generateRecentActivity(members || [], blogs, events || [], resources || [])
@@ -199,7 +226,7 @@ export default function AdminDashboard() {
             monthlyData
           },
           blogs: {
-            total: blogData.length,
+            total: blogs.length,
             published: publishedBlogs,
             drafts: draftBlogs,
             totalViews
@@ -210,7 +237,7 @@ export default function AdminDashboard() {
             recentAttendance
           },
           resources: {
-            total: totalResources,
+            total: resources.length,
             published: publishedResources,
             totalDownloads
           },
@@ -281,8 +308,7 @@ export default function AdminDashboard() {
       })
     })
 
-    const blogData = blogs?.data || (Array.isArray(blogs) ? blogs : [])
-    const recentBlogs = blogData.slice(0, 2) || []
+    const recentBlogs = blogs.slice(0, 2) || []
     recentBlogs.forEach((blog: any) => {
       activities.push({
         id: `blog-${blog._id}`,
@@ -314,6 +340,9 @@ export default function AdminDashboard() {
     { name: "Associate", value: data.members.membershipTypes.associate, color: "#06B6D4" },
     { name: "Corporate", value: data.members.membershipTypes.corporate, color: "#10B981" },
   ].filter(item => item.value > 0)
+
+  // Calculate total published content (blogs + resources)
+  const totalPublishedContent = data.blogs.published + data.resources.published
 
   if (loading) {
     return (
@@ -396,8 +425,10 @@ export default function AdminDashboard() {
             <BookOpen className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{data.blogs.published}</div>
-            <p className="text-xs text-muted-foreground">Blog posts & resources</p>
+            <div className="text-2xl font-bold">{totalPublishedContent}</div>
+            <p className="text-xs text-muted-foreground">
+              {data.blogs.published} blogs, {data.resources.published} resources
+            </p>
           </CardContent>
         </Card>
 
