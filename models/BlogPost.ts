@@ -65,16 +65,11 @@ const BlogPostSchema = new Schema<IBlogPost>({
     lowercase: true
   }],
   author: {
-    type: String,
-    required: [true, 'Author is required'],
-    enum: [
-      'AMWIK',
-      'AMWIK Team',
-      'AMWIK AUTHOR1',
-      'AMWIK AUTHOR2',
-      'AMWIK AUTHOR3',
-    ]
-  },
+  type: String,
+  required: [true, 'Author is required'],
+  trim: true,
+  maxlength: [100, 'Author name cannot exceed 100 characters']
+},
   featuredImage: {
     type: String,
     validate: {

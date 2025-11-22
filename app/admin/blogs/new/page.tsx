@@ -541,21 +541,27 @@ export default function NewBlogPage() {
                   </p>
                 </div>
 
-                <div>
-                  <Label htmlFor="author" className="text-sm font-medium">Author *</Label>
-                  <Select value={formData.author} onValueChange={(value) => handleInputChange("author", value)}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Select author" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="AMWIK">AMWIK</SelectItem>
-                      <SelectItem value="AMWIK Team">AMWIK Team</SelectItem>
-                      <SelectItem value="AMWIK AUTHOR1">AMWIK AUTHOR1</SelectItem>
-                      <SelectItem value="AMWIK AUTHOR2">AMWIK AUTHOR2</SelectItem>
-                      <SelectItem value="AMWIK AUTHOR3">AMWIK AUTHOR3</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+               <div>
+  <Label htmlFor="author" className="text-sm font-medium">Author *</Label>
+  <div className="relative mt-1">
+    <Input
+      id="author"
+      value={formData.author}
+      onChange={(e) => handleInputChange("author", e.target.value)}
+      placeholder="Type author name or select from suggestions"
+      className="mt-1"
+      list="authors-list"
+    />
+    <datalist id="authors-list">
+      <option value="AMWIK" />
+      <option value="AMWIK Team" />
+      <option value="AMWIK AUTHOR1" />
+      <option value="AMWIK AUTHOR2" />
+      <option value="AMWIK AUTHOR3" />
+    </datalist>
+  </div>
+  <p className="text-xs text-gray-500 mt-1">Type a custom name or select from suggestions</p>
+</div>
               </CardContent>
             </Card>
 
