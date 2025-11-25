@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { ArrowLeft, Upload, FileText, Search, Users, Download, Trash2, RefreshCw, Calendar } from "lucide-react"
+import { ArrowLeft, Upload, FileText, Search, Users, Download, Trash2, RefreshCw, Calendar, Loader2 } from "lucide-react"
 import * as Papa from "papaparse"
 import React from "react"
 
@@ -22,6 +22,7 @@ interface HistoricalMember {
   organisation: string
   email: string
   phone: string
+  membershipNumber: string 
   year: string
   uploadDate: string
 }
@@ -32,62 +33,61 @@ interface HistoricalMember {
  */
 const findKey = (row: any, fieldMappings: string[]) => {
   const rowKeys = Object.keys(row)
-  // Create an array of trimmed and lowercased keys from the CSV row
   const trimmedLowerRowKeys = rowKeys.map(key => key.toLowerCase().trim()) 
   
   for (const mapping of fieldMappings) {
-    // Trim and lowercase the expected mapping name
     const targetMapping = mapping.toLowerCase().trim() 
-    
-    // Find the index of the target mapping in the processed row keys
     const foundIndex = trimmedLowerRowKeys.indexOf(targetMapping)
     
     if (foundIndex !== -1) {
-      // Return the original key corresponding to the found index
       return rowKeys[foundIndex]
     }
   }
-  return null // Return null if no matching key is found
+  return null
 }
-
 
 export default function HistoricalMembersPage() {
   const [historicalMembers, setHistoricalMembers] = useState<HistoricalMember[]>([])
-  const [loading, setLoading] = useState(false)
-  const [uploading, setUploading] = useState(false)
-  const [error, setError] = useState<string>("")
-  const [success, setSuccess] = useState<string>("")
-  const [searchTerm, setSearchTerm] = useState("")
-  const [selectedYear, setSelectedYear] = useState("All")
+  const [loading, setLoading] = useState(true)
   const [file, setFile] = useState<File | null>(null)
   const [uploadYear, setUploadYear] = useState(new Date().getFullYear().toString())
-  const [previewData, setPreviewData] = useState<any[]>([])
+  const [uploading, setUploading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [selectedYear, setSelectedYear] = useState("All")
   const [showPreview, setShowPreview] = useState(false)
+  const [previewData, setPreviewData] = useState<Partial<HistoricalMember>[]>([])
 
-  // Fetch historical members
-  const fetchHistoricalMembers = async () => {
+  const fetchHistoricalMembers = useCallback(async () => {
+    setLoading(true)
     try {
-      setLoading(true)
-      setError("")
       const response = await fetch("/api/historical-members")
-      if (!response.ok) throw new Error("Failed to fetch historical members")
-      const data = await response.json()
-      setHistoricalMembers(data || [])
-    } catch (err: any) {
-      console.error("Error fetching historical members:", err)
-      setError(err.message || "Failed to fetch historical members")
+      if (!response.ok) {
+        throw new Error("Failed to fetch members")
+      }
+      const data: HistoricalMember[] = await response.json()
+      setHistoricalMembers(data)
+    } catch (err) {
+      setError("Failed to load historical members. Check API connection.")
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    fetchHistoricalMembers()
+  }, [fetchHistoricalMembers])
 
   // Handle file selection and preview
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0]
     if (!selectedFile) return
 
-    if (selectedFile.type !== "text/csv") {
-      setError("Please select a CSV file")
+    if (selectedFile.type !== "text/csv" && !selectedFile.name.endsWith(".csv")) {
+      setError("Invalid file type. Please upload a CSV file.")
+      setFile(null)
+      setShowPreview(false)
       return
     }
 
@@ -101,25 +101,26 @@ export default function HistoricalMembersPage() {
       skipEmptyLines: true,
       complete: (results) => {
         if (results.errors.length > 0) {
-          setError("Error parsing CSV: " + results.errors[0].message)
+          setError(`CSV parsing error: ${results.errors[0].message}`)
+          setShowPreview(false)
           return
         }
         
-        // NEW: Pre-process the preview data using the robust findKey logic
         const processedPreview = results.data
-            .slice(0, 5) // Show first 5 rows for preview
+            .slice(0, 5)
             .map((row: any) => {
                 const nameKey = findKey(row, csvColumnMappings.name)
                 const organisationKey = findKey(row, csvColumnMappings.organisation)
                 const emailKey = findKey(row, csvColumnMappings.email)
                 const phoneKey = findKey(row, csvColumnMappings.phone)
+                const membershipNumberKey = findKey(row, csvColumnMappings.membershipNumber)
 
-                // Return a structured object for display in the preview table
                 return {
                     name: (row[nameKey!] || "").trim(),
                     organisation: (row[organisationKey!] || "").trim(),
                     email: (row[emailKey!] || "").trim(),
                     phone: (row[phoneKey!] || "").trim(),
+                    membershipNumber: (row[membershipNumberKey!] || "").trim(),
                 }
             })
         
@@ -127,20 +128,16 @@ export default function HistoricalMembersPage() {
         setShowPreview(true)
       },
       error: (error) => {
-        setError("Error reading file: " + error.message)
+        setError(`CSV reading failed: ${error.message}`)
+        setShowPreview(false)
       }
     })
   }
 
   // Upload CSV data
   const uploadCSVData = async () => {
-    if (!file) {
-      setError("Please select a file first")
-      return
-    }
-
-    if (!uploadYear) {
-      setError("Please select a year")
+    if (!file || !uploadYear) {
+      setError("Please select a file and specify the membership year.")
       return
     }
 
@@ -155,43 +152,31 @@ export default function HistoricalMembersPage() {
       complete: async (results) => {
         try {
           if (results.errors.length > 0) {
-            setError("Error parsing CSV: " + results.errors[0].message)
-            return
+            throw new Error(`CSV parsing error: ${results.errors[0].message}`)
           }
 
-          // Log column names to debug
-          if (results.data.length > 0) {
-            const firstRow = results.data[0] as Record<string, any>
-            console.log("CSV Columns:", Object.keys(firstRow))
-            console.log("First row:", firstRow)
-          }
-
-          // Transform data to match our schema
           const membersData = results.data
             .map((row: any) => {
-              // Use the robust key finder with the imported mappings
               const nameKey = findKey(row, csvColumnMappings.name)
               const organisationKey = findKey(row, csvColumnMappings.organisation)
               const emailKey = findKey(row, csvColumnMappings.email)
               const phoneKey = findKey(row, csvColumnMappings.phone)
+              const membershipNumberKey = findKey(row, csvColumnMappings.membershipNumber)
 
               return {
-                // Use the found key, or an empty string if no key was found
                 name: (row[nameKey!] || "").trim(),
                 organisation: (row[organisationKey!] || "").trim(),
                 email: (row[emailKey!] || "").trim(),
                 phone: (row[phoneKey!] || "").trim(),
+                membershipNumber: (row[membershipNumberKey!] || "").trim(),
                 year: uploadYear,
                 uploadDate: new Date().toISOString()
               }
             })
-            .filter(member => member.name.trim()) // Filter out empty names
-
-          console.log("Final members data:", membersData)
+            .filter(member => member.name.trim())
 
           if (membersData.length === 0) {
-            setError("No valid member data found in CSV. Check if 'name' column exists and has values.")
-            return
+            throw new Error("No valid member records found in the CSV.")
           }
 
           const response = await fetch("/api/historical-members", {
@@ -204,50 +189,56 @@ export default function HistoricalMembersPage() {
 
           if (!response.ok) {
             const errorData = await response.json()
-            throw new Error(errorData.message || "Failed to upload members")
+            throw new Error(errorData.message || "Failed to upload members to database.")
           }
 
           const result = await response.json()
-          setSuccess(`Successfully uploaded ${result.count} historical members`)
+          setSuccess(`Successfully uploaded ${result.count} historical members.`)
+          
           setFile(null)
-          setPreviewData([])
           setShowPreview(false)
+          setPreviewData([])
           
           // Reset file input
-          const fileInput = document.getElementById("csv-file") as HTMLInputElement
+          const fileInput = document.getElementById("csvFile") as HTMLInputElement
           if (fileInput) fileInput.value = ""
           
-          // Refresh the list
-          await fetchHistoricalMembers()
+          fetchHistoricalMembers()
         } catch (err: any) {
-          console.error("Error uploading CSV:", err)
-          setError(err.message || "Failed to upload CSV")
+          setError(err.message || "An unknown error occurred during upload.")
         } finally {
           setUploading(false)
         }
       },
       error: (error) => {
-        setError("Error reading file: " + error.message)
+        setError(`CSV reading failed: ${error.message}`)
         setUploading(false)
       }
     })
   }
 
-  // Delete historical member
   const deleteHistoricalMember = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this historical member record?")) return
-
+    if (!window.confirm("Are you sure you want to delete this historical member?")) return
+    
+    setLoading(true)
+    setError(null)
+    setSuccess(null)
+    
     try {
       const response = await fetch(`/api/historical-members?id=${id}`, {
         method: "DELETE",
       })
 
-      if (!response.ok) throw new Error("Failed to delete member")
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || "Failed to delete member.")
+      }
 
-      setHistoricalMembers(prev => prev.filter(m => m._id !== id))
-      setSuccess("Historical member deleted successfully")
+      setSuccess("Historical member deleted successfully.")
+      fetchHistoricalMembers()
     } catch (err: any) {
-      setError(err.message || "Failed to delete member")
+      setError(err.message || "An unknown error occurred during deletion.")
+      setLoading(false)
     }
   }
 
@@ -256,24 +247,21 @@ export default function HistoricalMembersPage() {
     const matchesSearch = member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          member.organisation.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         member.phone.includes(searchTerm)
+                         member.phone.includes(searchTerm) ||
+                         member.membershipNumber.toLowerCase().includes(searchTerm.toLowerCase())
+                         
     const matchesYear = selectedYear === "All" || member.year === selectedYear
     return matchesSearch && matchesYear
   })
 
-  // Get unique years for filter
-  const availableYears = Array.from(new Set(historicalMembers.map(m => m.year))).sort((a, b) => b.localeCompare(a))
-
-  // Stats
+  // Get unique years and stats
+  const uniqueYears = Array.from(new Set(historicalMembers.map(m => m.year))).sort().reverse()
   const totalHistoricalMembers = historicalMembers.length
+  const availableYears = uniqueYears
   const membersByYear = historicalMembers.reduce((acc, member) => {
     acc[member.year] = (acc[member.year] || 0) + 1
     return acc
   }, {} as Record<string, number>)
-
-  React.useEffect(() => {
-    fetchHistoricalMembers()
-  }, [])
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -307,18 +295,17 @@ export default function HistoricalMembersPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Alerts */}
         {error && (
-          <Alert className="mb-6 border-red-200 bg-red-50">
-            <AlertDescription className="text-red-800">{error}</AlertDescription>
+          <Alert variant="destructive" className="mb-4">
+            <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
-
         {success && (
-          <Alert className="mb-6 border-green-200 bg-green-50">
-            <AlertDescription className="text-green-800">{success}</AlertDescription>
+          <Alert className="mb-4 bg-green-100 border-green-500 text-green-700">
+            <AlertDescription>{success}</AlertDescription>
           </Alert>
         )}
 
-        {/* Stats */}
+        {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardHeader>
@@ -354,33 +341,38 @@ export default function HistoricalMembersPage() {
           </Card>
         </div>
 
-        {/* CSV Upload Section */}
+        {/* CSV Upload Card */}
         <Card className="mb-8">
           <CardHeader>
             <CardTitle>Upload Historical Members CSV</CardTitle>
             <CardDescription>
-              Upload a CSV file containing historical member data. Expected columns: name, organisation, email, phone
+              Upload a CSV file containing historical member data. Expected columns: name, organisation, email, phone, membership number
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label htmlFor="csv-file" className="block text-sm font-medium mb-2">
+                <label htmlFor="csvFile" className="block text-sm font-medium mb-2">
                   Select CSV File
                 </label>
                 <Input
-                  id="csv-file"
+                  id="csvFile"
                   type="file"
                   accept=".csv"
                   onChange={handleFileSelect}
+                  disabled={uploading}
                   className="cursor-pointer"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-2">Year</label>
-                <Select value={uploadYear} onValueChange={setUploadYear}>
+                <Select
+                  value={uploadYear}
+                  onValueChange={setUploadYear}
+                  disabled={uploading}
+                >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select year" />
+                    <SelectValue placeholder="Select Year" />
                   </SelectTrigger>
                   <SelectContent>
                     {Array.from({ length: 30 }, (_, i) => {
@@ -395,19 +387,19 @@ export default function HistoricalMembersPage() {
                 </Select>
               </div>
               <div className="flex items-end">
-                <Button 
-                  onClick={uploadCSVData} 
-                  disabled={!file || uploading}
+                <Button
+                  onClick={uploadCSVData}
+                  disabled={!file || uploading || !uploadYear}
                   className="w-full"
                 >
                   {uploading ? (
                     <>
-                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Uploading...
                     </>
                   ) : (
                     <>
-                      <Upload className="h-4 w-4 mr-2" />
+                      <Upload className="mr-2 h-4 w-4" />
                       Upload CSV
                     </>
                   )}
@@ -427,16 +419,17 @@ export default function HistoricalMembersPage() {
                         <TableHead>Organisation</TableHead>
                         <TableHead>Email</TableHead>
                         <TableHead>Phone</TableHead>
+                        <TableHead>Member No.</TableHead> 
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {/* NOW USING THE PROCESSED DATA FIELDS */}
                       {previewData.map((row, index) => (
                         <TableRow key={index}>
                           <TableCell>{row.name || "N/A"}</TableCell>
                           <TableCell>{row.organisation || "N/A"}</TableCell>
                           <TableCell>{row.email || "N/A"}</TableCell> 
                           <TableCell>{row.phone || "N/A"}</TableCell>
+                          <TableCell>{row.membershipNumber || "N/A"}</TableCell> 
                         </TableRow>
                       ))}
                     </TableBody>
@@ -447,7 +440,7 @@ export default function HistoricalMembersPage() {
           </CardContent>
         </Card>
 
-        {/* Filters */}
+        {/* Filter Card */}
         <Card className="mb-6">
           <CardHeader>
             <CardTitle>Filter Historical Members</CardTitle>
@@ -456,7 +449,7 @@ export default function HistoricalMembersPage() {
             <div className="flex flex-col md:flex-row gap-4">
               <div className="flex-1">
                 <Input
-                  placeholder="Search by name, organisation, email, or phone..."
+                  placeholder="Search by name, organisation, email, phone, or member number..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full"
@@ -468,7 +461,7 @@ export default function HistoricalMembersPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="All">All Years</SelectItem>
-                  {availableYears.map(year => (
+                  {uniqueYears.map(year => (
                     <SelectItem key={year} value={year}>{year}</SelectItem>
                   ))}
                 </SelectContent>
@@ -484,8 +477,9 @@ export default function HistoricalMembersPage() {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="flex justify-center py-8">
-                <RefreshCw className="h-6 w-6 animate-spin text-purple-600" />
+              <div className="flex justify-center items-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
+                <span className="ml-3 text-lg text-gray-600">Loading members...</span>
               </div>
             ) : (
               <Table>
@@ -495,6 +489,7 @@ export default function HistoricalMembersPage() {
                     <TableHead>Organisation</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Phone</TableHead>
+                    <TableHead>Member No.</TableHead> 
                     <TableHead>Year</TableHead>
                     <TableHead>Upload Date</TableHead>
                     <TableHead>Actions</TableHead>
@@ -507,6 +502,7 @@ export default function HistoricalMembersPage() {
                       <TableCell>{member.organisation}</TableCell>
                       <TableCell>{member.email}</TableCell>
                       <TableCell>{member.phone}</TableCell>
+                      <TableCell>{member.membershipNumber}</TableCell> 
                       <TableCell>
                         <Badge variant="outline">{member.year}</Badge>
                       </TableCell>
@@ -527,7 +523,7 @@ export default function HistoricalMembersPage() {
                   ))}
                   {filteredMembers.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                      <TableCell colSpan={8} className="text-center py-8 text-gray-500">
                         No historical members found
                       </TableCell>
                     </TableRow>

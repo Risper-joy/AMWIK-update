@@ -60,6 +60,8 @@ export async function POST(request: NextRequest) {
         organisation: (member.organisation || member.organization || "").trim(),
         email: (member.email || "").trim(),
         phone: (member.phone || "").trim(),
+        // ADDED: Include membership number
+        membershipNumber: (member.membershipNumber || "").trim(), 
         year: member.year,
         uploadDate: new Date().toISOString(),
         source: "csv_upload",
@@ -70,7 +72,7 @@ export async function POST(request: NextRequest) {
 
     if (validMembers.length === 0) {
       return NextResponse.json(
-        { message: "No valid members found in the data. Each member must have a name and year." },
+        { message: "No valid members found in the uploaded data (must have Name and Year)." },
         { status: 400 }
       )
     }
@@ -88,7 +90,8 @@ export async function POST(request: NextRequest) {
       message: "Historical members uploaded successfully",
       count: result.insertedCount,
       insertedIds: result.insertedIds,
-      format: "name, organisation, email, phone, year, uploadDate, source"
+      // UPDATED: Added membershipNumber to the format documentation
+      format: "name, organisation, email, phone, membershipNumber, year, uploadDate, source"
     })
   } catch (error) {
     console.error("Error uploading historical members:", error)
@@ -126,7 +129,8 @@ export async function DELETE(request: NextRequest) {
     }
 
     return NextResponse.json({
-      message: "Historical member deleted successfully"
+      message: "Historical member deleted successfully",
+      id: id,
     })
   } catch (error) {
     console.error("Error deleting historical member:", error)

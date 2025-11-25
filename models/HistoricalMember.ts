@@ -5,6 +5,8 @@ export interface HistoricalMember {
   organisation: string
   email: string
   phone: string
+  // ADDED: New field for membership number
+  membershipNumber: string 
   year: string
   uploadDate: string
   createdAt?: Date
@@ -34,6 +36,11 @@ export const historicalMembersSchema = {
           bsonType: "string",
           description: "Member's phone number"
         },
+        // ADDED: Membership Number Schema property
+        membershipNumber: {
+          bsonType: "string",
+          description: "Member's unique membership number"
+        },
         year: {
           bsonType: "string",
           description: "Year of membership - required"
@@ -60,13 +67,15 @@ export const csvColumnMappings = {
   name: ['name', 'Name', 'full_name', 'Full Name', 'member_name', 'Member Name'],
   organisation: ['organisation', 'organization', 'Organisation', 'Organization', 'company', 'Company'],
   email: ['email', 'Email', 'email_address', 'Email Address', 'e-mail', 'E-mail'],
-  phone: ['phone', 'Phone', 'phone_number', 'Phone Number', 'contact', 'Contact', 'mobile', 'Mobile']
+  phone: ['phone', 'Phone', 'phone_number', 'Phone Number', 'contact', 'Contact', 'mobile', 'Mobile'],
+  // ADDED: Mappings for Membership Number
+  membershipNumber: ['membershipNumber', 'membership_number', 'Membership Number', 'member_no', 'Member No']
 }
 
 // Sample CSV format documentation
 export const csvFormat = `
 Expected CSV Format:
-1. Headers (first row): name, organisation, email, phone
+1. Headers (first row): name, organisation, email, phone, membershipNumber
 2. Data rows with corresponding values
 
 Alternative accepted column names:
@@ -74,9 +83,5 @@ Alternative accepted column names:
 - Organisation: organisation, organization, Organisation, Organization, company, Company
 - Email: email, Email, email_address, Email Address, e-mail, E-mail
 - Phone: phone, Phone, phone_number, Phone Number, contact, Contact, mobile, Mobile
-
-Sample CSV:
-name,organisation,email,phone
-John Doe,ABC Media,john@example.com,+254700123456
-Jane Smith,XYZ Broadcasting,jane@example.com,+254711234567
+- Membership Number: membershipNumber, membership_number, Membership Number, member_no, Member No
 `

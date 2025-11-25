@@ -1,137 +1,242 @@
 // app/api/team-members/route.ts
 
-import { NextRequest, NextResponse } from "next/server"
-import { MongoClient, ObjectId } from "mongodb"
-// Ensure this path is correct
-import { TeamMember } from "@/models/TeamMember" 
+import { NextRequest, NextResponse } from 'next/server'
+import connectToDatabase from '@/lib/mongodb'
+import TeamMember from '@/models/TeamMember'
+import { ObjectId } from 'mongodb'
 
-const MONGODB_URI = process.env.MONGODB_URI!
-const DB_NAME = process.env.DB_NAME || "amwik"
-const COLLECTION_NAME = "team_members"
-
-let cachedClient: MongoClient | null = null
-
-async function connectToDatabase() {
-  if (cachedClient) {
-    return cachedClient
-  }
-
-  if (!MONGODB_URI) {
-    throw new Error("MONGODB_URI is not defined in environment variables")
-  }
-  
-  const client = new MongoClient(MONGODB_URI)
-  await client.connect()
-  cachedClient = client
-  return client
-}
-
-// GET - Fetch all team members
-export async function GET() {
+/**
+ * GET - Fetch all team members or a specific member
+ * Query: ?id=<memberId> (optional)
+ */
+export async function GET(req: NextRequest) {
   try {
-    const client = await connectToDatabase()
-    const db = client.db(DB_NAME)
-    const collection = db.collection<TeamMember>(COLLECTION_NAME)
+    await connectToDatabase()
 
-    // Sort by team and then name
-    const teamMembers = await collection
-      .find({})
-      .sort({ team: 1, name: 1 }) 
-      .toArray()
+    const { searchParams } = new URL(req.url)
+    const memberId = searchParams.get('id')
 
-    return NextResponse.json(teamMembers)
-  } catch (error) {
-    console.error("Error fetching team members:", error)
+    if (memberId) {
+      // Fetch single member
+      if (!ObjectId.isValid(memberId)) {
+        return NextResponse.json({ error: 'Invalid member ID' }, { status: 400 })
+      }
+
+      const member = await TeamMember.findById(memberId)
+      if (!member) {
+        return NextResponse.json({ error: 'Member not found' }, { status: 404 })
+      }
+
+      return NextResponse.json(member)
+    } else {
+      // Fetch all members, sorted by team and creation date
+      const members = await TeamMember.find()
+        .sort({ team: 1, createdAt: -1 })
+        .lean()
+
+      return NextResponse.json(members)
+    }
+  } catch (error: any) {
+    console.error('GET /api/team-members error:', error)
     return NextResponse.json(
-      { message: "Failed to fetch team members" },
+      { error: error.message || 'Error fetching team members' },
       { status: 500 }
     )
   }
 }
 
-// POST - Add a new team member
-export async function POST(request: NextRequest) {
+/**
+ * POST - Create a new team member
+ */
+export async function POST(req: NextRequest) {
   try {
-    const newMemberData: TeamMember = await request.json()
+    await connectToDatabase()
 
-    if (!newMemberData.name || !newMemberData.position || !newMemberData.team || !newMemberData.email) {
-        return NextResponse.json(
-            { message: "Missing required fields: name, position, team, and email are mandatory." },
-            { status: 400 }
-        )
-    }
-    
-    // Defaulting missing optional fields
-    const memberToInsert: Omit<TeamMember, '_id' | 'createdAt' | 'updatedAt'> = {
-        ...newMemberData,
-        expertise: Array.isArray(newMemberData.expertise) ? newMemberData.expertise : [],
-        image: newMemberData.image || "default-placeholder.png",
-        joinDate: newMemberData.joinDate || new Date().toISOString(),
-        status: newMemberData.status || 'active',
-        linkedin: newMemberData.linkedin || "",
-        twitter: newMemberData.twitter || ""
-    }
+    const body = await req.json()
 
-    const client = await connectToDatabase()
-    const db = client.db(DB_NAME)
-    const collection = db.collection<TeamMember>(COLLECTION_NAME)
-
-    const result = await collection.insertOne({
-        ...memberToInsert,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-    } as TeamMember)
-
-    const insertedMember = await collection.findOne({ _id: result.insertedId })
-
-    return NextResponse.json({
-      message: "Team member added successfully",
-      member: insertedMember,
-    }, { status: 201 })
-
-  } catch (error) {
-    console.error("Error adding team member:", error)
-    return NextResponse.json(
-      { message: "Failed to add team member" },
-      { status: 500 }
-    )
-  }
-}
-
-// DELETE - Delete a specific team member by ID
-export async function DELETE(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url)
-    const id = searchParams.get("id")
-
-    if (!id || !ObjectId.isValid(id)) {
+    // Validate required fields
+    if (!body.name || !body.email || !body.position || !body.team || !body.bio) {
       return NextResponse.json(
-        { message: "Invalid member ID" },
+        { error: 'Missing required fields: name, email, position, team, bio' },
         { status: 400 }
       )
     }
 
-    const client = await connectToDatabase()
-    const db = client.db(DB_NAME)
-    const collection = db.collection<TeamMember>(COLLECTION_NAME)
-
-    const result = await collection.deleteOne({ _id: new ObjectId(id) })
-
-    if (result.deletedCount === 0) {
+    // Check if email already exists
+    const existingMember = await TeamMember.findOne({ 
+      email: body.email.toLowerCase() 
+    })
+    if (existingMember) {
       return NextResponse.json(
-        { message: "Team member not found" },
+        { error: 'Email already in use' },
+        { status: 409 }
+      )
+    }
+
+    // Create new member
+    const newMember = new TeamMember({
+      name: body.name.trim(),
+      position: body.position.trim(),
+      team: body.team.toLowerCase(),
+      image: body.image || '',
+      bio: body.bio.trim(),
+      email: body.email.toLowerCase().trim(),
+      phone: body.phone?.trim() || '',
+      linkedin: body.linkedin?.trim() || '',
+      twitter: body.twitter?.trim() || '',
+      expertise: Array.isArray(body.expertise) ? body.expertise : [],
+      joinDate: body.joinDate || new Date(),
+      status: body.status || 'active'
+    })
+
+    await newMember.save()
+
+    return NextResponse.json(
+      { success: true, member: newMember },
+      { status: 201 }
+    )
+  } catch (error: any) {
+    console.error('POST /api/team-members error:', error)
+    return NextResponse.json(
+      { error: error.message || 'Error creating team member' },
+      { status: 500 }
+    )
+  }
+}
+
+/**
+ * PUT - Update an existing team member
+ * Query: ?id=<memberId>
+ */
+export async function PUT(req: NextRequest) {
+  try {
+    await connectToDatabase()
+
+    const { searchParams } = new URL(req.url)
+    const memberId = searchParams.get('id')
+
+    if (!memberId) {
+      return NextResponse.json(
+        { error: 'Member ID is required' },
+        { status: 400 }
+      )
+    }
+
+    if (!ObjectId.isValid(memberId)) {
+      return NextResponse.json(
+        { error: 'Invalid member ID' },
+        { status: 400 }
+      )
+    }
+
+    const body = await req.json()
+
+    // Validate required fields
+    if (!body.name || !body.email || !body.position || !body.bio) {
+      return NextResponse.json(
+        { error: 'Missing required fields: name, email, position, bio' },
+        { status: 400 }
+      )
+    }
+
+    // Check if email is being changed to an existing one
+    if (body.email) {
+      const existingMember = await TeamMember.findOne({
+        email: body.email.toLowerCase(),
+        _id: { $ne: new ObjectId(memberId) }
+      })
+      if (existingMember) {
+        return NextResponse.json(
+          { error: 'Email already in use' },
+          { status: 409 }
+        )
+      }
+    }
+
+    // Prepare update data
+    const updateData = {
+      name: body.name.trim(),
+      position: body.position.trim(),
+      team: body.team?.toLowerCase() || 'secretariat',
+      image: body.image || '',
+      bio: body.bio.trim(),
+      email: body.email.toLowerCase().trim(),
+      phone: body.phone?.trim() || '',
+      linkedin: body.linkedin?.trim() || '',
+      twitter: body.twitter?.trim() || '',
+      expertise: Array.isArray(body.expertise) ? body.expertise : [],
+      status: body.status || 'active'
+    }
+
+    // Update member
+    const updatedMember = await TeamMember.findByIdAndUpdate(
+      memberId,
+      updateData,
+      { new: true, runValidators: true }
+    )
+
+    if (!updatedMember) {
+      return NextResponse.json(
+        { error: 'Member not found' },
         { status: 404 }
       )
     }
 
     return NextResponse.json({
-      message: "Team member deleted successfully",
-      id: id,
+      success: true,
+      member: updatedMember
     })
-  } catch (error) {
-    console.error("Error deleting team member:", error)
+  } catch (error: any) {
+    console.error('PUT /api/team-members error:', error)
     return NextResponse.json(
-      { message: "Failed to delete team member" },
+      { error: error.message || 'Error updating team member' },
+      { status: 500 }
+    )
+  }
+}
+
+/**
+ * DELETE - Delete a team member
+ * Query: ?id=<memberId>
+ */
+export async function DELETE(req: NextRequest) {
+  try {
+    await connectToDatabase()
+
+    const { searchParams } = new URL(req.url)
+    const memberId = searchParams.get('id')
+
+    if (!memberId) {
+      return NextResponse.json(
+        { error: 'Member ID is required' },
+        { status: 400 }
+      )
+    }
+
+    if (!ObjectId.isValid(memberId)) {
+      return NextResponse.json(
+        { error: 'Invalid member ID' },
+        { status: 400 }
+      )
+    }
+
+    const deletedMember = await TeamMember.findByIdAndDelete(memberId)
+
+    if (!deletedMember) {
+      return NextResponse.json(
+        { error: 'Member not found' },
+        { status: 404 }
+      )
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: `Team member ${deletedMember.name} deleted successfully`
+    }, { status: 200 })
+  } catch (error: any) {
+    console.error('DELETE /api/team-members error:', error)
+    return NextResponse.json(
+      { error: error.message || 'Error deleting team member' },
       { status: 500 }
     )
   }

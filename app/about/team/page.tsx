@@ -1,278 +1,260 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import HeroSection from "@/components/hero-section"
-import { Mail, Phone, Linkedin, Twitter } from "lucide-react"
+import { Mail, Phone, Linkedin, Twitter, X } from "lucide-react"
 
-const secretariatTeam = [
-  {
-    id: 1,
-    name: "Queenter Mbori",
-    position: "Executive Director",
-    image: "/images/queenter.png",
-    bio: "Queenter is a seasoned journalist and media advocate with over 12 years of experience in the industry. She has led AMWIK since 2024, driving initiatives",
-    email: "info@amwik.org",
-    phone: "+254 712 345 678",
-    linkedin: "linkedin.com/in/Queentermbori",
-    twitter: "@queentermbori",
-    expertise: ["Leadership", "Media Advocacy", "Strategic Planning", "Policy Development"],
-  },
-  {
-    id: 2,
-    name: "Lilian Museka",
-    position: "Programs Manager",
-    image: "https://amwik.org/wp-content/uploads/2025/03/Cyklia-Kathambi-2.png",
-    bio: "Lilian Museka is a seasoned professional with over 16 years of experience in media and advocacy...",
-    email: "lilian@amwik.org",
-    phone: "+254 723 456 789",
-    linkedin: "linkedin.com/in/lilianmuseka",
-    twitter: "@lilianmuseka",
-    expertise: ["Program Management", "Training", "Community Outreach", "Project Coordination"],
-  },
-  {
-    id: 3,
-    name: "Gladys Muveva",
-    position: "Finance Manager",
-    image: "https://amwik.org/wp-content/uploads/2024/01/Gladys-Muveva.png",
-    bio: "Gladys is an experienced Finance & Administration Manager with over a decade of expertise...",
-    email: "info@amwik.org",
-    phone: "+254 745 678 901",
-    linkedin: "linkedin.com/in/gladysmuveva",
-    twitter: "@gladysmuveva",
-    expertise: ["Financial Management", "Budgeting", "Compliance", "Audit"],
-  },
-  {
-    id: 4,
-    name: "Denis Mbau",
-    position: "Communications Officer",
-    image: "https://amwik.org/wp-content/uploads/2024/01/Dennis-Mbau.png",
-    bio: "Denis is a communications and media professional with over 8 years of cross-sector experience...",
-    email: "denis@amwik.org",
-    phone: "+254 734 567 890",
-    linkedin: "linkedin.com/in/denismbau",
-    twitter: "@denismbau",
-    expertise: ["Digital Marketing", "Content Creation", "Social Media", "Brand Management"],
-  },
-  {
-    id: 5,
-    name: "Peter Mwangi",
-    position: "Programs Assistant",
-    image: "https://amwik.org/wp-content/uploads/2025/03/Peter-Mwangi-1.png",
-    bio: "Peter Mwangi is a dedicated professional with a strong background in communication and media studies.",
-    email: "peter@amwik.org",
-    phone: "+254 756 789 012",
-    linkedin: "linkedin.com/in/petermwangi",
-    twitter: "@petermwangi",
-    expertise: ["Program Management", "Training", "Community Outreach", "Project Coordination"],
-  },
-  {
-    id: 6,
-    name: "Mercy Mwikali",
-    position: "Admin Assistant & Membership Coordinator",
-    image: "https://amwik.org/wp-content/uploads/2024/01/mercy-mwikali-adm-assistant.jpeg",
-    bio: "Mercy holds a Certificate in Secretarial Studies and provides general office support to the AMWIK Secretariat and Board.",
-    email: "mercy@amwik.org",
-    phone: "+254 767 890 123",
-    linkedin: "linkedin.com/in/mercymwikali",
-    twitter: "@mercymwikali",
-    expertise: ["Member Relations", "Event Coordination", "Database Management", "Customer Service"],
-  },
-]
-
-const boardMembers = [
-  {
-    id: 7,
-    name: "Robi Koki Ochieng'",
-    position: "Chairperson",
-    image: "https://amwik.org/wp-content/uploads/2025/09/retouch_2025090121001582.jpg",
-    bio: "With over 30 years of experience in media and communications, Robi brings a wealth of expertise and an unwavering commitment to gender equity, ethical journalism, and digital safety",
-    email: "@board.amwik.org",
-    phone: "+254 712 345 678",
-    linkedin: "linkedin.com/in/",
-    twitter: "@drobiokochieng",
-    expertise: ["Journalism", "Media Education", "Governance", "Academic Leadership"],
-  },
-  {
-    id: 8,
-    name: "Elizabth Limagur",
-    position: "Vice Chairperson",
-    image: "https://amwik.org/wp-content/uploads/2025/09/retouch_2025090121044149.jpg",
-    bio: "Elizabeth is a dynamic media and communications expert with more than fifteen years of experience in journalism, peacebuilding, and public leadership.",
-    email: "@board.amwik.org",
-    phone: "+254 789 012 345",
-    linkedin: "linkedin.com/in",
-    twitter: "@",
-    expertise: ["Entrepreneurship", "Advocacy", "Business Development", "Mentorship"],
-  },
-  {
-    id: 9,
-    name: "Joyce Mbataru",
-    position: "Treasurer",
-    image: "https://amwik.org/wp-content/uploads/2025/08/Joyce-Mbataru-Treasurer.jpg",
-    bio: "Joyce is a Communication for Development specialist with 15+ years of experience in community-led conservation, gender, youth, and media development",
-    email: "@board.amwik.org",
-    phone: "+254 701 234 567",
-    linkedin: "linkedin.com/in/",
-    twitter: "@",
-    expertise: ["Financial Oversight", "Audit", "Risk Management", "Strategic Planning"],
-  },
-  {
-    id: 10,
-    name: "Mary Mwendwa",
-    position: "Board Member",
-    image: "https://amwik.org/wp-content/uploads/2025/09/retouch_2025090121001499.jpg",
-    bio: "Mary is an award-winning investigative journalist, editor, and media trainer whose focus is to empower women in media, defend press freedom, and amplify underreported stories.",
-    email: "@board.amwik.org",
-    phone: "+254 733 555 999",
-    linkedin: "linkedin.com/in/",
-    twitter: "@",
-    expertise: ["Investigative Journalism", "Leadership"],
-  },
-  {
-    id: 11,
-    name: "Lynn Nzambi",
-    position: "Board Member",
-    image: "https://amwik.org/wp-content/uploads/2025/09/retouch_2025090121044061.jpg",
-    bio: "Lynn is a committed civil servant currently serving in the County Government of Kitui and a former court reporter at KBC. Her speciality is corporate communication",
-    email: "@board.amwik.org",
-    phone: "+254 722 111 222",
-    linkedin: "linkedin.com/in/",
-    twitter: "@",
-    expertise: ["Media Relations", "Corporate Communication", "Public Relations"],
-  },
-  {
-    id: 12,
-    name: "Clara Micheni",
-    position: "Board Member",
-    image: "https://amwik.org/wp-content/uploads/2025/09/retouch_2025090121043969.jpg",
-    bio: "Clara is a seasoned communications and public relations professional with over a decade of experience spanning print media, corporate communications, and community engagement.",
-    email: "@board.amwik.org",
-    phone: "+254 733 888 444",
-    linkedin: "linkedin.com/in/",
-    twitter: "@",
-    expertise: ["Strategic Communications", "Public Relations", "Media Relations"],
-  },
-  {
-    id: 13,
-    name: "Nancy Agutu",
-    position: "Board Member",
-    image: "https://amwik.org/wp-content/uploads/2025/08/Nancy-Agutu-scaled.jpg",
-    bio: "Nancy is a dynamic media practitioner and communication consultant with 5 years of experience in project management, digital media, and content creation.",
-    email: "@board.amwik.org",
-    phone: "+254 700 555 666",
-    linkedin: "linkedin.com/in/",
-    twitter: "@",
-    expertise: ["Journalism", "Mentorship", "Gender Advocacy"],
-  },
-]
-
-const boardOfTrustees = [
-  {
-    id: 14,
-    name: "Anne Anjao",
-    position: "Trustee",
-    image: "https://amwik.org/wp-content/uploads/2025/09/retouch_2025090121043875.jpg",
-    bio: "Ann is a media scholar and Head of Media & Film Studies at Daystar University, with over 14 years of experience in journalism and academia across Kenya and Rwanda.",
-    email: "trustee1@amwik.org",
-    phone: "+254 700 111 111",
-    linkedin: "linkedin.com/in/trusteeone",
-    twitter: "@trusteeone",
-    expertise: ["Strategy", "Leadership", "Media Studies"],
-  },
-  {
-    id: 15,
-    name: "Victoria Musimbi",
-    position: "Trustee",
-    image: "https://amwik.org/wp-content/uploads/2025/09/retouch_2025090121001418.jpg",
-    bio: "Victoria is a passionate journalist with 5+ years of experience reporting on health, climate change, gender, and education.",
-    email: "trustee2@amwik.org",
-    phone: "+254 700 222 222",
-    linkedin: "linkedin.com/in/trusteetwo",
-    twitter: "@trusteetwo",
-    expertise: ["Advocacy", "Policy", "Community Development"],
-  },
-  {
-    id: 16,
-    name: "Mercy Wairimu",
-    position: "Trustee",
-    image: "https://amwik.org/wp-content/uploads/2025/09/retouch_2025090121001234.jpg",
-    bio: "Mercy is a passionate communications professional and committed AMWIK member whose journey began as an intern in 2022. Now working at Ichiban Tax & Business Advisory LLP, she brings expertise in media relations, public affairs, and policy advocacy.",
-    email: "trustee3@amwik.org",
-    phone: "+254 700 333 333",
-    linkedin: "linkedin.com/in/trusteethree",
-    twitter: "@trusteethree",
-    expertise: ["Partnerships", "Communications"],
-  },
-]
+interface TeamMember {
+  _id?: string
+  name: string
+  position: string
+  team: 'secretariat' | 'board_directors' | 'board_trustees'
+  image: string
+  bio: string
+  email: string
+  phone: string
+  linkedin?: string
+  twitter?: string
+  expertise: string[]
+  joinDate?: string
+  status?: 'active' | 'inactive' | 'on leave'
+  // ADDED: Include the automatic Mongoose timestamps for precise sorting
+  createdAt?: string 
+  updatedAt?: string
+}
 
 export default function TeamPage() {
   const [activeTab, setActiveTab] = useState("secretariat")
+  const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null)
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const TeamMemberCard = ({ member }: { member: any }) => (
-    <Card className="group relative overflow-hidden hover:shadow-xl transition-all duration-300">
-      <CardContent className="p-0">
-        <div className="relative aspect-[4/5] overflow-hidden">
-          <img
-            src={member.image && member.image.trim() !== "" ? member.image : "/default-profile.png"}
-            alt={member.name}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-          />
-          {/* Overlay */}
-          <div className="absolute inset-0 bg-[var(--amwik-purple)] opacity-0 group-hover:opacity-80 transition-all duration-300 flex items-center justify-center">
-            <div className="text-white p-6 transform translate-y-4 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-300 max-w-full">
-              <h3 className="text-xl font-bold mb-2">{member.name}</h3>
-              <p className="text-sm mb-4 line-clamp-4">{member.bio}</p>
-              <div className="space-y-2 mb-4">
-                <div className="flex items-center text-sm">
-                  <Mail className="h-4 w-4 mr-2" />
-                  {member.email}
+  // Fetch team members on mount
+  useEffect(() => {
+    const fetchMembers = async () => {
+      try {
+        const response = await fetch("/api/team-members")
+        if (response.ok) {
+          const data: TeamMember[] = await response.json()
+          
+          // FIX: Sort members by the precise 'createdAt' timestamp (oldest first)
+          const sortedData = data.sort((a, b) => {
+            // Use createdAt, which is provided by Mongoose timestamps
+            const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+            const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+            
+            // Ascending sort (a - b) ensures the earliest created member appears first
+            return dateA - dateB;
+          });
+
+          setTeamMembers(sortedData)
+        }
+      } catch (error) {
+        console.error("Error fetching team members:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchMembers()
+  }, [])
+
+  // Filter members by team
+  const secretariatMembers = teamMembers.filter(m => m.team === 'secretariat')
+  const boardMembers = teamMembers.filter(m => m.team === 'board_directors')
+  const trusteeMembers = teamMembers.filter(m => m.team === 'board_trustees')
+
+  const getMembersForActiveTab = () => {
+    switch (activeTab) {
+      case 'secretariat':
+        return secretariatMembers
+      case 'board':
+        return boardMembers
+      case 'trustees':
+        return trusteeMembers
+      default:
+        return []
+    }
+  }
+
+  const currentMembers = getMembersForActiveTab()
+
+  // Member Profile Modal Component
+  const ProfileModal = ({ member, onClose }: { member: TeamMember; onClose: () => void }) => (
+    <>
+      {/* Background blur - Click handler closes the modal */}
+      <div
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-300"
+        onClick={onClose}
+      />
+
+      {/* Modal - Horizontal Layout */}
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div
+          className="bg-white rounded-2xl shadow-2xl max-w-5xl w-full overflow-hidden transition-all duration-300 transform scale-100 opacity-100" // Increased max-width
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-0">
+            {/* Left: Image (2/5 width) */}
+            <div className="md:col-span-2 relative h-full min-h-[400px] bg-gray-200 overflow-hidden">
+              {member.image ? (
+                <img
+                  src={member.image}
+                  alt={member.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-gray-300">
+                  <span className="text-4xl font-bold text-gray-600">
+                    {member.name.charAt(0)}
+                  </span>
                 </div>
-                <div className="flex items-center text-sm">
-                  <Phone className="h-4 w-4 mr-2" />
-                  {member.phone}
-                </div>
+              )}
+              {/* Purple translucent frame overlay */}
+              <div className="absolute inset-0 border-8 border-purple-500 border-opacity-40 pointer-events-none" />
+            </div>
+
+            {/* Right: Info (3/5 width) */}
+            <div className="md:col-span-3 p-8 relative">
+              {/* Close button */}
+              <button
+                onClick={onClose}
+                className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full transition-colors z-10"
+              >
+                <X className="h-5 w-5 text-gray-600" />
+              </button>
+
+              {/* Title section */}
+              <div className="mb-6 mt-4">
+                <p className="text-sm font-medium text-purple-600 mb-1 uppercase">{member.position}</p>
+                <h2 className="text-4xl font-extrabold text-gray-900 mb-2">{member.name}</h2>
+                <p className="text-md font-medium text-pink-600">{member.team.replace(/_/g, ' ')}</p>
               </div>
-              <div className="flex space-x-2 mb-4">
-                <a
-                  href={`https://${member.linkedin}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2 bg-white bg-opacity-20 rounded-full hover:bg-opacity-30 transition-colors"
-                >
-                  <Linkedin className="h-4 w-4" />
-                </a>
-                <a
-                  href={`https://twitter.com/${member.twitter.replace("@", "")}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2 bg-white bg-opacity-20 rounded-full hover:bg-opacity-30 transition-colors"
-                >
-                  <Twitter className="h-4 w-4" />
-                </a>
-              </div>
-              <div className="flex flex-wrap gap-1">
-                {member.expertise?.slice(0, 3).map((skill: string, index: number) => (
-                  <Badge
-                    key={index}
-                    variant="secondary"
-                    className="text-xs bg-white bg-opacity-20 text-white border-white border-opacity-30"
+
+              {/* Social links - Moved higher for visibility */}
+              <div className="flex gap-4 mb-6">
+                {member.linkedin && (
+                  <a
+                    href={member.linkedin}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 bg-purple-100 hover:bg-purple-600 hover:text-white rounded-full transition-colors"
                   >
-                    {skill}
-                  </Badge>
-                ))}
+                    <Linkedin className="h-5 w-5 text-purple-600 hover:text-white" />
+                  </a>
+                )}
+                {member.twitter && (
+                  <a
+                    href={member.twitter}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 bg-pink-100 hover:bg-pink-600 hover:text-white rounded-full transition-colors"
+                  >
+                    <Twitter className="h-5 w-5 text-pink-600 hover:text-white" />
+                  </a>
+                )}
+              </div>
+              
+              {/* Bio */}
+              <div className="mb-6 max-h-48 overflow-y-auto pr-2">
+                <p className="text-gray-700 text-base leading-relaxed">
+                  {member.bio}
+                </p>
+              </div>
+
+              {/* Contact info and Expertise in a structured grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t pt-4">
+                <div>
+                    <h3 className="font-semibold text-gray-900 text-sm mb-2">Contact</h3>
+                    <div className="space-y-2">
+                        <div className="flex items-center space-x-3">
+                            <Mail className="h-4 w-4 text-purple-600 flex-shrink-0" />
+                            <a
+                              href={`mailto:${member.email}`}
+                              className="text-sm text-purple-600 hover:text-pink-600 transition-colors truncate"
+                            >
+                              {member.email}
+                            </a>
+                        </div>
+                        <div className="flex items-center space-x-3">
+                            <Phone className="h-4 w-4 text-purple-600 flex-shrink-0" />
+                            <span className="text-sm text-gray-600">{member.phone}</span>
+                        </div>
+                    </div>
+                </div>
+
+                {member.expertise && member.expertise.length > 0 && (
+                    <div>
+                      <h3 className="font-semibold text-gray-900 text-sm mb-2">Expertise</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {member.expertise.map((skill, index) => (
+                          <Badge
+                            key={index}
+                            variant="outline"
+                            className="bg-purple-50 text-purple-700 border-purple-200"
+                          >
+                            {skill}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                )}
               </div>
             </div>
           </div>
         </div>
-        {/* Basic info */}
+      </div>
+    </>
+  )
+
+  // Team Member Card Component
+  const TeamMemberCard = ({ member }: { member: TeamMember }) => (
+    <Card className="group relative overflow-hidden transition-all duration-300 cursor-pointer" onClick={() => setSelectedMember(member)}>
+      <CardContent
+        className="p-0"
+      >
+        <div className="relative aspect-[4/5] overflow-hidden bg-gray-200">
+          {member.image ? (
+            <img
+              src={member.image}
+              alt={member.name}
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gray-300">
+              <span className="text-5xl font-bold text-gray-600">
+                {member.name.charAt(0)}
+              </span>
+            </div>
+          )}
+          {/* Purple translucent frame */}
+          <div className="absolute inset-0 border-8 border-purple-500 border-opacity-40 pointer-events-none" />
+
+          {/* HOVER OVERLAY: Appears on hover */}
+          <div className='absolute inset-0 bg-purple-900/70 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4'>
+              <div className='text-white w-full'>
+                  <p className="text-sm font-medium mb-1">{member.position}</p>
+                  <h3 className="font-bold text-xl mb-2">{member.name}</h3>
+                  {/* Bio Preview (first three lines) */}
+                  <p className="text-xs line-clamp-3">
+                      {member.bio}
+                  </p>
+                  <span className='mt-2 inline-block text-xs font-semibold underline'>
+                      Click for full profile →
+                  </span>
+              </div>
+          </div>
+        </div>
+        {/* Basic info (always visible) */}
         <div className="p-4">
-          <h3 className="font-semibold text-lg">{member.name}</h3>
-          <p className="text-[var(--amwik-purple)] font-medium">{member.position}</p>
+          <h3 className="font-semibold text-lg text-gray-900 cursor-pointer hover:text-purple-600 transition-colors">
+            {member.name}
+          </h3>
+          <p className="text-purple-600 font-medium text-sm">{member.position}</p>
         </div>
       </CardContent>
     </Card>
@@ -307,7 +289,7 @@ export default function TeamPage() {
                 <TabsTrigger value="secretariat" className="px-8 py-3">
                   Secretariat Team
                   <Badge variant="secondary" className="ml-2">
-                    {secretariatTeam.length}
+                    {secretariatMembers.length}
                   </Badge>
                 </TabsTrigger>
                 <TabsTrigger value="board" className="px-8 py-3">
@@ -319,7 +301,7 @@ export default function TeamPage() {
                 <TabsTrigger value="trustees" className="px-8 py-3">
                   Board of Trustees
                   <Badge variant="secondary" className="ml-2">
-                    {boardOfTrustees.length}
+                    {trusteeMembers.length}
                   </Badge>
                 </TabsTrigger>
               </TabsList>
@@ -335,8 +317,8 @@ export default function TeamPage() {
                 </p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {secretariatTeam.map((member) => (
-                  <TeamMemberCard key={member.id} member={member} />
+                {secretariatMembers.map((member) => (
+                  <TeamMemberCard key={member._id} member={member} />
                 ))}
               </div>
             </TabsContent>
@@ -352,7 +334,7 @@ export default function TeamPage() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {boardMembers.map((member) => (
-                  <TeamMemberCard key={member.id} member={member} />
+                  <TeamMemberCard key={member._id} member={member} />
                 ))}
               </div>
             </TabsContent>
@@ -362,18 +344,26 @@ export default function TeamPage() {
               <div className="mb-8">
                 <h3 className="text-2xl font-bold text-gray-900 mb-4">Board of Trustees</h3>
                 <p className="text-gray-600 mb-8">
-                  Our board of trustees provides foundational support and ensures accountability in AMWIK’s mission.
+                  Our board of trustees provides foundational support and ensures accountability in AMWIK's mission.
                 </p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {boardOfTrustees.map((member) => (
-                  <TeamMemberCard key={member.id} member={member} />
+                {trusteeMembers.map((member) => (
+                  <TeamMemberCard key={member._id} member={member} />
                 ))}
               </div>
             </TabsContent>
           </Tabs>
         </div>
       </main>
+
+      {/* Profile Modal */}
+      {selectedMember && (
+        <ProfileModal
+          member={selectedMember}
+          onClose={() => setSelectedMember(null)}
+        />
+      )}
 
       {/* Footer */}
       <Footer />
