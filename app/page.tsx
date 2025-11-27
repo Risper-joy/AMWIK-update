@@ -317,79 +317,87 @@ export default function HomePage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {upcomingEvents.map((event) => (
-                <Card key={event._id} className="hover:shadow-lg transition-shadow overflow-hidden">
-                  <div className="relative">
-                    <Image
-                      src={event.featuredImage || "/placeholder.svg"}
-                      alt={event.title}
-                      width={400}
-                      height={200}
-                      className="w-full h-48 object-cover"
-                    />
-                    {event.type && (
-                      <Badge className="absolute top-4 left-4 bg-[var(--amwik-blue)]">
-                        {event.type}
-                      </Badge>
-                    )}
-                    {event.price === "Free" && (
-                      <Badge className="absolute top-4 right-4 bg-green-500">Free</Badge>
-                    )}
-                  </div>
+              {upcomingEvents.map((event) => {
+                const registrationPercentage = event.capacity
+                  ? Math.min(100, Math.round(((event.registered || 0) / event.capacity) * 100))
+                  : 0
 
-                  <CardHeader>
-                    <CardTitle className="text-lg">{event.title}</CardTitle>
-                    <CardDescription>{event.description}</CardDescription>
-                  </CardHeader>
-
-                  <CardContent>
-                    <div className="space-y-3">
-                      <div className="flex items-center text-sm text-gray-600">
-                        <Calendar className="h-4 w-4 mr-2" />
-                        <span>{new Date(event.startDate).toLocaleDateString()}</span>
-                        {event.startTime && (
-                          <>
-                            <Clock className="h-4 w-4 ml-4 mr-2" />
-                            <span>{event.startTime}</span>
-                          </>
-                        )}
-                      </div>
-
-                      <div className="flex items-center text-sm text-gray-600">
-                        <MapPin className="h-4 w-4 mr-2" />
-                        <span>
-                          {event.venue}, {event.city}, {event.country}
-                        </span>
-                      </div>
-
-                      {event.capacity && (
-                        <div className="flex items-center justify-between text-sm">
-                          <div className="flex items-center text-gray-600">
-                            <Users className="h-4 w-4 mr-2" />
-                            <span>
-                              {event.registered || 0}/{event.capacity} registered
-                            </span>
-                          </div>
-                          <div className="font-semibold text-[var(--amwik-purple)]">
-                            {event.price}
-                          </div>
-                        </div>
+                return (
+                  <Card key={event._id} className="hover:shadow-lg transition-shadow overflow-hidden">
+                    <div className="relative">
+                      <Image
+                        src={event.featuredImage || "/placeholder.svg"}
+                        alt={event.title}
+                        width={400}
+                        height={200}
+                        className="w-full h-48 object-cover"
+                      />
+                      {event.type && (
+                        <Badge className="absolute top-4 left-4 bg-[var(--amwik-blue)]">
+                          {event.type}
+                        </Badge>
                       )}
-
-                      {event.capacity && (
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div
-                            className="bg-[var(--amwik-purple)] h-2 rounded-full"
-                            style={{
-                              width: `${((event.registered || 0) / event.capacity) * 100}%`,
-                            }}
-                          ></div>
-                        </div>
+                      {event.price === "Free" && (
+                        <Badge className="absolute top-4 right-4 bg-green-500">Free</Badge>
                       )}
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
+
+                    <CardHeader>
+                      <CardTitle className="text-lg">{event.title}</CardTitle>
+                      <CardDescription>{event.description}</CardDescription>
+                    </CardHeader>
+
+                    <CardContent>
+                      <div className="space-y-3">
+                        <div className="flex items-center text-sm text-gray-600">
+                          <Calendar className="h-4 w-4 mr-2" />
+                          <span>{new Date(event.startDate).toLocaleDateString()}</span>
+                          {event.startTime && (
+                            <>
+                              <Clock className="h-4 w-4 ml-4 mr-2" />
+                              <span>{event.startTime}</span>
+                            </>
+                          )}
+                        </div>
+
+                        <div className="flex items-center text-sm text-gray-600">
+                          <MapPin className="h-4 w-4 mr-2" />
+                          <span>
+                            {event.venue}, {event.city}, {event.country}
+                          </span>
+                        </div>
+
+                        {event.capacity && (
+                          <div className="flex items-center justify-between text-sm pt-2 border-t">
+                            <div className="flex items-center text-gray-600">
+                              <Users className="h-4 w-4 mr-1" />
+                              <span>
+                                {event.registered || 0}/{event.capacity} registered
+                              </span>
+                            </div>
+                            {event.price && (
+                              <div className="font-semibold text-[var(--amwik-purple)]">
+                                {event.price}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {event.capacity && (
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div
+                              className="bg-[var(--amwik-purple)] h-2 rounded-full"
+                              style={{
+                                width: `${registrationPercentage}%`,
+                              }}
+                            ></div>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )
+              })}
             </div>
           )}
 
