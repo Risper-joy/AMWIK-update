@@ -9,15 +9,20 @@ import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { X } from "lucide-react"
 
 const galleryImages = [
-  { id: 1, image: "images/amwik-logo.png" },
-  { id: 2, image: "/placeholder.svg?height=400&width=600" },
-  { id: 3, image: "/placeholder.svg?height=400&width=600" },
-  { id: 4, image: "/placeholder.svg?height=400&width=600" },
-  { id: 5, image: "/placeholder.svg?height=400&width=600" },
-  { id: 6, image: "/placeholder.svg?height=400&width=600" },
-  { id: 7, image: "/placeholder.svg?height=400&width=600" },
-  { id: 8, image: "/placeholder.svg?height=400&width=600" },
+  { id: 1, image: "images/back1.jpg" },
+  { id: 2, image: "images/back2.jpg" },
+  { id: 3, image: "images/back4.jpg" },
+  { id: 4, image: "images/back5.jpg" },
+  { id: 5, image: "images/back7.jpg" },
+  { id: 6, image: "images/back8.jpg" },
+  { id: 7, image: "images/back10.jpeg" },
+  { id: 8, image: "images/back11.jpg" },
+  { id: 9, image: "images/back12.jpg" },
+  { id: 10, image: "images/back13.jpg" },
+  { id: 11, image: "images/back14.jpg" },
+  { id: 12, image: "images/back15.jpg" },
 ]
+
 
 export default function GalleryPage() {
   const [selectedImage, setSelectedImage] = useState<any>(null)
