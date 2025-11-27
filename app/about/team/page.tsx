@@ -23,7 +23,6 @@ interface TeamMember {
   expertise: string[]
   joinDate?: string
   status?: 'active' | 'inactive' | 'on leave'
-  // ADDED: Include the automatic Mongoose timestamps for precise sorting
   createdAt?: string 
   updatedAt?: string
 }
@@ -39,23 +38,25 @@ export default function TeamPage() {
     const fetchMembers = async () => {
       try {
         const response = await fetch("/api/team-members")
-        if (response.ok) {
-          const data: TeamMember[] = await response.json()
-          
-          // FIX: Sort members by the precise 'createdAt' timestamp (oldest first)
-          const sortedData = data.sort((a, b) => {
-            // Use createdAt, which is provided by Mongoose timestamps
-            const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-            const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-            
-            // Ascending sort (a - b) ensures the earliest created member appears first
-            return dateA - dateB;
-          });
-
-          setTeamMembers(sortedData)
+        if (!response.ok) {
+          throw new Error(`Failed to fetch: ${response.status}`)
         }
+        
+        const data: TeamMember[] = await response.json()
+        
+        console.log('👥 Team members fetched:', data.length)
+
+        // Sort members by createdAt timestamp (oldest first)
+        const sortedData = data.sort((a, b) => {
+          const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0
+          const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0
+          return dateA - dateB
+        })
+
+        setTeamMembers(sortedData)
       } catch (error) {
         console.error("Error fetching team members:", error)
+        setTeamMembers([])
       } finally {
         setLoading(false)
       }
@@ -95,7 +96,7 @@ export default function TeamPage() {
       {/* Modal - Horizontal Layout */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div
-          className="bg-white rounded-2xl shadow-2xl max-w-5xl w-full overflow-hidden transition-all duration-300 transform scale-100 opacity-100" // Increased max-width
+          className="bg-white rounded-2xl shadow-2xl max-w-5xl w-full overflow-hidden transition-all duration-300 transform scale-100 opacity-100"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="grid grid-cols-1 md:grid-cols-5 gap-0">
@@ -214,9 +215,7 @@ export default function TeamPage() {
   // Team Member Card Component
   const TeamMemberCard = ({ member }: { member: TeamMember }) => (
     <Card className="group relative overflow-hidden transition-all duration-300 cursor-pointer" onClick={() => setSelectedMember(member)}>
-      <CardContent
-        className="p-0"
-      >
+      <CardContent className="p-0">
         <div className="relative aspect-[4/5] overflow-hidden bg-gray-200">
           {member.image ? (
             <img
@@ -307,52 +306,72 @@ export default function TeamPage() {
               </TabsList>
             </div>
 
-            {/* Secretariat */}
-            <TabsContent value="secretariat">
-              <div className="mb-8">
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">Secretariat Team</h3>
-                <p className="text-gray-600 mb-8">
-                  Our secretariat team handles the day-to-day operations of AMWIK, implementing programs, managing
-                  communications, and ensuring our mission is carried out effectively.
-                </p>
+            {loading ? (
+              <div className="flex justify-center py-12">
+                <div className="animate-spin h-8 w-8 text-purple-600" />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {secretariatMembers.map((member) => (
-                  <TeamMemberCard key={member._id} member={member} />
-                ))}
-              </div>
-            </TabsContent>
+            ) : (
+              <>
+                {/* Secretariat */}
+                <TabsContent value="secretariat">
+                  <div className="mb-8">
+                    <h3 className="text-2xl font-bold text-gray-900 mb-4">Secretariat Team</h3>
+                    <p className="text-gray-600 mb-8">
+                      Our secretariat team handles the day-to-day operations of AMWIK, implementing programs, managing
+                      communications, and ensuring our mission is carried out effectively.
+                    </p>
+                  </div>
+                  {secretariatMembers.length === 0 ? (
+                    <p className="text-center text-gray-600 py-8">No team members yet</p>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                      {secretariatMembers.map((member) => (
+                        <TeamMemberCard key={member._id} member={member} />
+                      ))}
+                    </div>
+                  )}
+                </TabsContent>
 
-            {/* Board of Directors */}
-            <TabsContent value="board">
-              <div className="mb-8">
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">Board of Directors</h3>
-                <p className="text-gray-600 mb-8">
-                  Our board provides strategic oversight and governance, bringing together experienced leaders from
-                  various sectors of the media industry to guide AMWIK's long-term vision.
-                </p>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {boardMembers.map((member) => (
-                  <TeamMemberCard key={member._id} member={member} />
-                ))}
-              </div>
-            </TabsContent>
+                {/* Board of Directors */}
+                <TabsContent value="board">
+                  <div className="mb-8">
+                    <h3 className="text-2xl font-bold text-gray-900 mb-4">Board of Directors</h3>
+                    <p className="text-gray-600 mb-8">
+                      Our board provides strategic oversight and governance, bringing together experienced leaders from
+                      various sectors of the media industry to guide AMWIK's long-term vision.
+                    </p>
+                  </div>
+                  {boardMembers.length === 0 ? (
+                    <p className="text-center text-gray-600 py-8">No team members yet</p>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                      {boardMembers.map((member) => (
+                        <TeamMemberCard key={member._id} member={member} />
+                      ))}
+                    </div>
+                  )}
+                </TabsContent>
 
-            {/* Board of Trustees */}
-            <TabsContent value="trustees">
-              <div className="mb-8">
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">Board of Trustees</h3>
-                <p className="text-gray-600 mb-8">
-                  Our board of trustees provides foundational support and ensures accountability in AMWIK's mission.
-                </p>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {trusteeMembers.map((member) => (
-                  <TeamMemberCard key={member._id} member={member} />
-                ))}
-              </div>
-            </TabsContent>
+                {/* Board of Trustees */}
+                <TabsContent value="trustees">
+                  <div className="mb-8">
+                    <h3 className="text-2xl font-bold text-gray-900 mb-4">Board of Trustees</h3>
+                    <p className="text-gray-600 mb-8">
+                      Our board of trustees provides foundational support and ensures accountability in AMWIK's mission.
+                    </p>
+                  </div>
+                  {trusteeMembers.length === 0 ? (
+                    <p className="text-center text-gray-600 py-8">No team members yet</p>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                      {trusteeMembers.map((member) => (
+                        <TeamMemberCard key={member._id} member={member} />
+                      ))}
+                    </div>
+                  )}
+                </TabsContent>
+              </>
+            )}
           </Tabs>
         </div>
       </main>

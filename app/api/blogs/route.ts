@@ -22,7 +22,11 @@ export async function GET(request: NextRequest) {
     
     if (status && status !== 'All') {
       query.status = status; // Exact match for status
+    } else {
+      // Default to published posts only for public pages
+      query.status = 'Published';
     }
+    
     if (category && category !== 'All') {
       query.category = category;
     }
@@ -44,14 +48,19 @@ export async function GET(request: NextRequest) {
     
     const [posts, total] = await Promise.all([
       BlogPost.find(query)
-        .sort({ createdAt: -1 })
+        .sort({ publishDate: -1, createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .lean(),
       BlogPost.countDocuments(query)
     ]);
 
-    console.log('📊 Blog Query:', { query, totalFound: total, postsReturned: posts.length });
+    console.log('📊 Blog Query:', { 
+      status: status || 'Published (default)',
+      category, 
+      totalFound: total, 
+      postsReturned: posts.length 
+    });
     
     return NextResponse.json({
       success: true,
@@ -69,7 +78,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Error fetching blog posts:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch blog posts' },
+      { success: false, error: 'Failed to fetch blog posts', data: [] },
       { status: 500 }
     );
   }

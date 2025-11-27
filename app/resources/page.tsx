@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Search, Download, Calendar, FileText, BookOpen, Newspaper, BarChart3, Users } from "lucide-react"
+import { Search, Download, Calendar, FileText, BookOpen, Newspaper, BarChart3, Users, Loader2 } from "lucide-react"
 
 const resourceTypes = ["All Types", "Research Paper", "Publication", "Article"]
 const categories = [
@@ -30,17 +30,28 @@ export default function ResourcesPage() {
   const [selectedCategory, setSelectedCategory] = useState("All Categories")
   const [sortBy, setSortBy] = useState("newest")
   const [filteredResources, setFilteredResources] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
   // Fetch resources from backend
   useEffect(() => {
     const fetchResources = async () => {
       try {
         const res = await fetch("/api/resources")
+        if (!res.ok) throw new Error('Failed to fetch resources')
+        
         const data = await res.json()
-        setResources(data)
-        setFilteredResources(data)
+        console.log('📚 Resources fetched:', Array.isArray(data) ? data.length : 0)
+        
+        // Ensure data is an array
+        const resourcesList = Array.isArray(data) ? data : []
+        setResources(resourcesList)
+        setFilteredResources(resourcesList)
       } catch (err) {
         console.error("Failed to fetch resources", err)
+        setResources([])
+        setFilteredResources([])
+      } finally {
+        setLoading(false)
       }
     }
     fetchResources()
@@ -116,11 +127,11 @@ export default function ResourcesPage() {
   const getTypeColor = (type: string) => {
     switch (type) {
       case "Research Paper":
-        return "bg-[var(--amwik-blue)]"
+        return "bg-blue-500"
       case "Publication":
-        return "bg-[var(--amwik-green)]"
+        return "bg-green-500"
       case "Article":
-        return "bg-[var(--amwik-orange)]"
+        return "bg-orange-500"
       default:
         return "bg-gray-500"
     }
@@ -213,7 +224,11 @@ export default function ResourcesPage() {
       {/* Resources Grid */}
       <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {filteredResources.length === 0 ? (
+          {loading ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-[var(--amwik-purple)]" />
+            </div>
+          ) : filteredResources.length === 0 ? (
             <div className="text-center py-12">
               <h3 className="text-2xl font-semibold text-gray-900 mb-4">No resources found</h3>
               <p className="text-gray-600">Try adjusting your search terms or filters.</p>

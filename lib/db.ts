@@ -1,27 +1,58 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose'
 
-const MONGODB_URI = process.env.MONGODB_URI || "";
+const MONGODB_URI = process.env.MONGODB_URI
 
 if (!MONGODB_URI) {
-  throw new Error("Please add your MongoDB URI to .env.local");
+  throw new Error('Missing MONGODB_URI environment variable')
 }
 
-// Use the project-wide global mongoose declaration in types/global.d.ts
-// (Do not redeclare `global mongoose` here to avoid conflicting type declarations)
+interface CachedConnection {
+  conn: typeof mongoose | null
+  promise: Promise<typeof mongoose> | null
+}
 
-let cached: { conn: typeof mongoose | null; promise: Promise<typeof mongoose> | null } = (global as any).mongoose || { conn: null, promise: null };
-(global as any).mongoose = cached;
+let cached: CachedConnection = (global as any).mongooseDb || {
+  conn: null,
+  promise: null,
+}
 
-export default async function connectDB() {
-  if (cached.conn) return cached.conn;
+if (!cached) {
+  ;(global as any).mongooseDb = cached
+}
 
-  if (!cached.promise) {
-    cached.promise = mongoose.connect(MONGODB_URI, {
-      dbName: "amwik_db",
-      bufferCommands: false,
-    }).then((mongoose) => mongoose);
+async function connectDB() {
+  if (cached.conn) {
+    console.log('Using cached MongoDB connection')
+    return cached.conn
   }
 
-  cached.conn = await cached.promise;
-  return cached.conn;
+  if (!cached.promise) {
+    const opts = {
+      bufferCommands: false,
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 5000,
+    }
+
+    cached.promise = mongoose
+      .connect(MONGODB_URI!, opts)
+      .then((mongoose) => {
+        console.log('✅ MongoDB Connected Successfully')
+        return mongoose
+      })
+      .catch((error) => {
+        console.error('❌ MongoDB Connection Failed:', error)
+        cached.promise = null
+        throw error
+      })
+  }
+
+  try {
+    cached.conn = await cached.promise
+    return cached.conn
+  } catch (error) {
+    console.error('Error getting cached connection:', error)
+    throw error
+  }
 }
+
+export default connectDB

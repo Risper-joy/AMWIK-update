@@ -36,11 +36,13 @@ export default function BlogPage() {
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const res = await fetch("/api/blogs")
+        const res = await fetch("/api/blogs?limit=100")
+        if (!res.ok) throw new Error('Failed to fetch blogs')
+        
         const result = await res.json()
         console.log("📝 Fetched blog posts:", result)
         
-        // Extract posts correctly from the API response
+        // ✅ Handle consistent response structure
         let posts = []
         if (result.success && result.data) {
           posts = Array.isArray(result.data) ? result.data : []
@@ -51,7 +53,7 @@ export default function BlogPage() {
         // Filter for published posts only
         const publishedPosts = posts.filter((post: any) => post.status === "Published")
         
-        console.log("📊 Published posts:", publishedPosts.length)
+        console.log("📊 Published posts found:", publishedPosts.length)
         setBlogPosts(publishedPosts)
         setFilteredPosts(publishedPosts)
       } catch (err) {

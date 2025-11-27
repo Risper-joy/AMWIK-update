@@ -9,11 +9,21 @@ const parseNumber = (value: any) =>
 export async function GET() {
   try {
     await dbConnect()
-    const events = await Event.find().sort({ createdAt: -1 })
-    return NextResponse.json(events)
+    const events = await Event.find().sort({ startDate: -1, createdAt: -1 }).lean()
+    
+    console.log('📊 Events fetched:', events.length)
+    
+    // ✅ Return consistent structure
+    return NextResponse.json({
+      success: true,
+      data: events || []
+    })
   } catch (error: any) {
     console.error("❌ GET /api/events error:", error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json(
+      { success: false, error: error.message, data: [] },
+      { status: 500 }
+    )
   }
 }
 
@@ -64,9 +74,17 @@ export async function POST(req: NextRequest) {
     const event = new Event(body)
     await event.save()
 
-    return NextResponse.json(event, { status: 201 })
+    console.log('✅ Event created:', { id: event._id, title: event.title })
+
+    return NextResponse.json({
+      success: true,
+      data: event
+    }, { status: 201 })
   } catch (error: any) {
     console.error("❌ POST /api/events error:", error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json(
+      { success: false, error: error.message, data: null },
+      { status: 500 }
+    )
   }
 }

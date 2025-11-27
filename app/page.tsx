@@ -62,6 +62,8 @@ const programs = [
 export default function HomePage() {
   const [featuredBlogs, setFeaturedBlogs] = useState<any[]>([])
   const [upcomingEvents, setUpcomingEvents] = useState<any[]>([])
+  const [blogsLoading, setBlogsLoading] = useState(true)
+  const [eventsLoading, setEventsLoading] = useState(true)
 
   useEffect(() => {
     const handleChunkError = (e: ErrorEvent) => {
@@ -78,46 +80,74 @@ export default function HomePage() {
     };
   }, []); 
 
+  // Fetch blog posts
   useEffect(() => {
     const fetchBlogs = async () => {
       try {
-        const res = await fetch("/api/blogs")
+        const res = await fetch("/api/blogs?limit=100")
+        if (!res.ok) throw new Error('Failed to fetch blogs')
+        
         const result = await res.json()
-        if (Array.isArray(result)) {
-          const sorted = result.sort(
-            (a: any, b: any) =>
-              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          )
-          setFeaturedBlogs(sorted.slice(0, 3))
-        } else if (result.success && Array.isArray(result.data)) {
-          const sorted = result.data.sort(
-            (a: any, b: any) =>
-              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          )
-          setFeaturedBlogs(sorted.slice(0, 3))
+        console.log("📝 Blog API Response:", result)
+        
+        let posts = []
+        if (result.success && result.data) {
+          posts = Array.isArray(result.data) ? result.data : []
+        } else if (Array.isArray(result)) {
+          posts = result
         }
+
+        // Filter for published posts only
+        const publishedPosts = posts.filter((p: any) => p.status === "Published")
+        
+        const sorted = publishedPosts.sort(
+          (a: any, b: any) =>
+            new Date(b.publishDate || b.createdAt).getTime() - 
+            new Date(a.publishDate || a.createdAt).getTime()
+        )
+        
+        console.log("📊 Featured blogs:", sorted.slice(0, 3).length)
+        setFeaturedBlogs(sorted.slice(0, 3))
       } catch (err) {
         console.error("Error fetching blogs:", err)
+        setFeaturedBlogs([])
+      } finally {
+        setBlogsLoading(false)
       }
     }
     fetchBlogs()
   }, [])
 
+  // Fetch events
   useEffect(() => {
     const fetchEvents = async () => {
       try {
         const res = await fetch("/api/events")
-        const data = await res.json()
+        if (!res.ok) throw new Error('Failed to fetch events')
+        
+        const result = await res.json()
+        console.log("📅 Events API Response:", result)
 
-        if (Array.isArray(data)) {
-          const sorted = data.sort(
-            (a: any, b: any) =>
-              new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
-          )
-          setUpcomingEvents(sorted.slice(0, 3))
+        let data = []
+        if (result.success && result.data) {
+          data = Array.isArray(result.data) ? result.data : []
+        } else if (Array.isArray(result)) {
+          data = result
         }
+
+        const sorted = data
+          .filter((event: any) => event.startDate)
+          .sort((a: any, b: any) => 
+            new Date(b.startDate).getTime() - new Date(a.startDate).getTime()
+          )
+        
+        console.log("📊 Upcoming events:", sorted.slice(0, 3).length)
+        setUpcomingEvents(sorted.slice(0, 3))
       } catch (err) {
         console.error("Error fetching events:", err)
+        setUpcomingEvents([])
+      } finally {
+        setEventsLoading(false)
       }
     }
     fetchEvents()
@@ -201,51 +231,61 @@ export default function HomePage() {
             <p className="text-xl text-gray-600">Insights, stories, and perspectives from women in media</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {featuredBlogs.map((post) => (
-              <Card key={post._id} className="hover:shadow-lg transition-shadow overflow-hidden">
-                <div className="relative">
-                  <Image
-                    src={post.featuredImage || "/placeholder.svg"}
-                    alt={post.title}
-                    width={400}
-                    height={200}
-                    className="w-full h-48 object-cover"
-                  />
-                  {post.category && (
-                    <Badge className="absolute top-4 left-4 bg-[var(--amwik-purple)]">
-                      {post.category}
-                    </Badge>
-                  )}
-                </div>
-
-                <CardHeader>
-                  <CardTitle className="text-lg hover:text-[var(--amwik-purple)] transition-colors">
-                    <Link href={`/blog/${post.slug || post._id}`}>{post.title}</Link>
-                  </CardTitle>
-                  <CardDescription className="text-sm">{post.excerpt}</CardDescription>
-                </CardHeader>
-
-                <CardContent>
-                  <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
-                    <div className="flex items-center space-x-2">
-                      <User className="h-4 w-4" />
-                      <span>{post.author}</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Calendar className="h-4 w-4" />
-                      <span>
-                        {post.publishDate
-                          ? new Date(post.publishDate).toLocaleDateString()
-                          : new Date(post.createdAt).toLocaleDateString()}
-                      </span>
-                    </div>
+          {blogsLoading ? (
+            <div className="flex justify-center py-12">
+              <div className="animate-spin h-8 w-8 text-[var(--amwik-purple)]" />
+            </div>
+          ) : featuredBlogs.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-600">No blog posts available yet.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {featuredBlogs.map((post) => (
+                <Card key={post._id} className="hover:shadow-lg transition-shadow overflow-hidden">
+                  <div className="relative">
+                    <Image
+                      src={post.featuredImage || "/placeholder.svg"}
+                      alt={post.title}
+                      width={400}
+                      height={200}
+                      className="w-full h-48 object-cover"
+                    />
+                    {post.category && (
+                      <Badge className="absolute top-4 left-4 bg-[var(--amwik-purple)]">
+                        {post.category}
+                      </Badge>
+                    )}
                   </div>
-                  <div className="text-sm text-gray-500">{post.readTime || "5 min read"}</div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+
+                  <CardHeader>
+                    <CardTitle className="text-lg hover:text-[var(--amwik-purple)] transition-colors">
+                      <Link href={`/blog/${post.slug || post._id}`}>{post.title}</Link>
+                    </CardTitle>
+                    <CardDescription className="text-sm">{post.excerpt}</CardDescription>
+                  </CardHeader>
+
+                  <CardContent>
+                    <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
+                      <div className="flex items-center space-x-2">
+                        <User className="h-4 w-4" />
+                        <span>{post.author}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Calendar className="h-4 w-4" />
+                        <span>
+                          {post.publishDate
+                            ? new Date(post.publishDate).toLocaleDateString()
+                            : new Date(post.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-sm text-gray-500">{post.readTime || "5 min read"}</div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
 
           <div className="text-center mt-8">
             <Link href="/blog">
@@ -267,83 +307,91 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {upcomingEvents.map((event) => (
-              <Card key={event._id} className="hover:shadow-lg transition-shadow overflow-hidden">
-                <div className="relative">
-                  <Image
-                    src={event.featuredImage || "/placeholder.svg"}
-                    alt={event.title}
-                    width={400}
-                    height={200}
-                    className="w-full h-48 object-cover"
-                  />
-                  {event.type && (
-                    <Badge className="absolute top-4 left-4 bg-[var(--amwik-blue)]">
-                      {event.type}
-                    </Badge>
-                  )}
-                  {event.price === "Free" && (
-                    <Badge className="absolute top-4 right-4 bg-green-500">Free</Badge>
-                  )}
-                </div>
+          {eventsLoading ? (
+            <div className="flex justify-center py-12">
+              <div className="animate-spin h-8 w-8 text-[var(--amwik-purple)]" />
+            </div>
+          ) : upcomingEvents.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-600">No upcoming events at the moment.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {upcomingEvents.map((event) => (
+                <Card key={event._id} className="hover:shadow-lg transition-shadow overflow-hidden">
+                  <div className="relative">
+                    <Image
+                      src={event.featuredImage || "/placeholder.svg"}
+                      alt={event.title}
+                      width={400}
+                      height={200}
+                      className="w-full h-48 object-cover"
+                    />
+                    {event.type && (
+                      <Badge className="absolute top-4 left-4 bg-[var(--amwik-blue)]">
+                        {event.type}
+                      </Badge>
+                    )}
+                    {event.price === "Free" && (
+                      <Badge className="absolute top-4 right-4 bg-green-500">Free</Badge>
+                    )}
+                  </div>
 
-                <CardHeader>
-                  <CardTitle className="text-lg">{event.title}</CardTitle>
-                  <CardDescription>{event.description}</CardDescription>
-                </CardHeader>
+                  <CardHeader>
+                    <CardTitle className="text-lg">{event.title}</CardTitle>
+                    <CardDescription>{event.description}</CardDescription>
+                  </CardHeader>
 
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="flex items-center text-sm text-gray-600">
-                      <Calendar className="h-4 w-4 mr-2" />
-                      <span>{new Date(event.startDate).toLocaleDateString()}</span>
-                      {event.startTime && (
-                        <>
-                          <Clock className="h-4 w-4 ml-4 mr-2" />
-                          <span>{event.startTime}</span>
-                        </>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div className="flex items-center text-sm text-gray-600">
+                        <Calendar className="h-4 w-4 mr-2" />
+                        <span>{new Date(event.startDate).toLocaleDateString()}</span>
+                        {event.startTime && (
+                          <>
+                            <Clock className="h-4 w-4 ml-4 mr-2" />
+                            <span>{event.startTime}</span>
+                          </>
+                        )}
+                      </div>
+
+                      <div className="flex items-center text-sm text-gray-600">
+                        <MapPin className="h-4 w-4 mr-2" />
+                        <span>
+                          {event.venue}, {event.city}, {event.country}
+                        </span>
+                      </div>
+
+                      {event.capacity && (
+                        <div className="flex items-center justify-between text-sm">
+                          <div className="flex items-center text-gray-600">
+                            <Users className="h-4 w-4 mr-2" />
+                            <span>
+                              {event.registered || 0}/{event.capacity} registered
+                            </span>
+                          </div>
+                          <div className="font-semibold text-[var(--amwik-purple)]">
+                            {event.price}
+                          </div>
+                        </div>
+                      )}
+
+                      {event.capacity && (
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div
+                            className="bg-[var(--amwik-purple)] h-2 rounded-full"
+                            style={{
+                              width: `${((event.registered || 0) / event.capacity) * 100}%`,
+                            }}
+                          ></div>
+                        </div>
                       )}
                     </div>
-
-                    <div className="flex items-center text-sm text-gray-600">
-                      <MapPin className="h-4 w-4 mr-2" />
-                      <span>
-                        {event.venue}, {event.city}, {event.country}
-                      </span>
-                    </div>
-
-                    {event.capacity && (
-                      <div className="flex items-center justify-between text-sm">
-                        <div className="flex items-center text-gray-600">
-                          <Users className="h-4 w-4 mr-2" />
-                          <span>
-                            {event.registered || 0}/{event.capacity} registered
-                          </span>
-                        </div>
-                        <div className="font-semibold text-[var(--amwik-purple)]">
-                          {event.price}
-                        </div>
-                      </div>
-                    )}
-
-                    {event.capacity && (
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-[var(--amwik-purple)] h-2 rounded-full"
-                          style={{
-                            width: `${((event.registered || 0) / event.capacity) * 100}%`,
-                          }}
-                        ></div>
-                      </div>
-                    )}
-
-                    
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
 
           <div className="text-center mt-8">
             <Link href="/events">

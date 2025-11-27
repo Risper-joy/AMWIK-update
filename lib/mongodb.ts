@@ -1,29 +1,15 @@
 import mongoose from 'mongoose'
 
-const MONGODB_URI = process.env.MONGODB_URI!
+const MONGODB_URI = process.env.MONGODB_URI
 
 if (!MONGODB_URI) {
-  throw new Error('Please define the MONGODB_URI environment variable inside .env.local')
+  throw new Error('Please define the MONGODB_URI environment variable')
 }
 
-/**
- * Global is used here to maintain a cached connection across hot reloads
- * in development. This prevents connections growing exponentially
- * during API Route usage.
- */
-interface CachedConnection {
-  conn: typeof mongoose | null
-  promise: Promise<typeof mongoose> | null
-}
+let cached = global.mongoose
 
-declare global {
-  var mongooseCache: CachedConnection | undefined
-}
-
-let cached: CachedConnection = globalThis.mongooseCache || { conn: null, promise: null }
-
-if (!globalThis.mongooseCache) {
-  globalThis.mongooseCache = cached
+if (!cached) {
+  cached = global.mongoose = { conn: null, promise: null }
 }
 
 async function connectDB() {
@@ -34,11 +20,22 @@ async function connectDB() {
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
+      maxPoolSize: 10,
+      minPoolSize: 5,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
     }
 
-    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
-      return mongoose
-    })
+    cached.promise = mongoose
+      .connect(MONGODB_URI!, opts)
+      .then((mongoose) => {
+        console.log('✅ MongoDB Connected')
+        return mongoose
+      })
+      .catch((err) => {
+        console.error('❌ MongoDB Connection Error:', err.message)
+        throw err
+      })
   }
 
   try {
@@ -49,6 +46,15 @@ async function connectDB() {
   }
 
   return cached.conn
+}
+
+// Declare global type
+declare global {
+  // reference the mongoose module type directly to avoid recursively referring to the global `mongoose` variable
+  var mongoose: {
+    conn: typeof import('mongoose') | null
+    promise: Promise<typeof import('mongoose') | null> | null
+  }
 }
 
 export default connectDB
